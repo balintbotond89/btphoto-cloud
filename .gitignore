@@ -1,0 +1,44 @@
+# Java / Maven
+target/
+*.class
+*.log
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+coverage/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# Runtime / local data
+data/
+tmp/
+uploads/
+*.pid
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Local tooling
+.codex/
