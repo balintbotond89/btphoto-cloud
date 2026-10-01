@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: btphoto-backend
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      base-path: /api
+      exposure:
+        include: health
