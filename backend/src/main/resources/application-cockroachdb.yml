@@ -1,0 +1,15 @@
+spring:
+  config:
+    activate:
+      on-profile: cockroachdb
+  datasource:
+    url: "jdbc:postgresql://${DB_HOST}:${DB_PORT:26257}/${DB_NAME}?sslmode=verify-full&sslrootcert=${DB_SSL_ROOT_CERT}"
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
