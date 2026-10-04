@@ -270,3 +270,13 @@ A válaszod végén mindig add meg:
 6. új dependency, migráció vagy security-hatás.
 
 Ha valamelyik kritikus AC nem teljesül, a feladat nem tekinthető késznek.
+
+## Kommentelési nyelv
+
+- Az újonnan írt forráskód-kommentek, SQL-migrációs megjegyzések és
+  konfigurációs magyarázatok magyar nyelvűek legyenek.
+- A technikai azonosítókat, API-neveket, konfigurációkulcsokat, SQL-kulcsszavakat
+  és külső eszközök által előírt elnevezéseket nem kell lefordítani.
+- Meglévő angol kommenteket csak az érintett feladat scope-jában kell magyarítani;
+  külön kérés nélkül ne történjen teljes repository-szintű átírás.
+  

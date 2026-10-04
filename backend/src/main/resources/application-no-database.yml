@@ -1,0 +1,7 @@
+spring:
+  config:
+    activate:
+      on-profile: no-database
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
