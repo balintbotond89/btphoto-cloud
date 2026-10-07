@@ -1398,6 +1398,7 @@ docs/
 - Caddy
 - VS Code + Codex
 - verziózott Markdown követelménycsomag
+- frontend unit- és komponenstesztek: Vitest + React Testing Library
 
 ## Még nyitott
 
@@ -1405,7 +1406,6 @@ docs/
 - végleges `vmbr2` IP-címzés
 - CockroachDB pontos TLS/certificate modell
 - CockroachDB integrációs teszt: Testcontainers vagy CI service container
-- frontend unit test framework pontos választása
 - Playwright bevezetési pontja
 - média preview generáló könyvtár/technológia
 - média kiszolgálás végső optimalizálása

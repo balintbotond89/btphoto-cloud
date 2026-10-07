@@ -104,7 +104,7 @@ btphoto-cloud/
     └── pull_request_template.md
 ```
 
-A repository jelenleg **skeleton állapotú**. A Spring Boot és React walking skeleton a következő fejlesztési fázis.
+A Spring Boot backend és a React frontend walking skeleton elkészült. A teljes walking skeleton még nem lezárt; a következő fázis a `sql01` CockroachDB és a valódi Flyway-integráció.
 
 ## Követelményvezérelt fejlesztés
 
@@ -187,13 +187,12 @@ A Codex:
 
 ## Következő fázis
 
-1. Git repository inicializálása.
-2. Spring Boot backend walking skeleton.
-3. React frontend walking skeleton.
-4. `sql01` CockroachDB.
-5. `docker01` Docker + NFS mount.
-6. CI quality gate.
-7. Első vertikális feature.
+1. A `sql01` CockroachDB alkalmazásoldali integrációja.
+2. A teljes Flyway migrációs lánc ellenőrzése valódi, eldobható CockroachDB tesztadatbázison.
+3. A teljes frontend → backend → CockroachDB walking skeleton lezárása.
+4. `docker01` Docker + NFS mount integráció.
+5. CI quality gate.
+6. Első vertikális feature.
 
 ## Dokumentációs státusz
 
