@@ -1,0 +1,20 @@
+---
+type Props = {
+  title?: string
+  description?: string
+}
+
+const {
+  title = "A művelet nem sikerült",
+  description = "Próbáld újra, vagy ellenőrizd a kapcsolatot.",
+} = Astro.props
+---
+
+<section class="feedback-state feedback-state--error" role="alert">
+  <span class="feedback-state__marker" aria-hidden="true">!</span>
+  <div>
+    <h2>{title}</h2>
+    <p>{description}</p>
+    <slot />
+  </div>
+</section>

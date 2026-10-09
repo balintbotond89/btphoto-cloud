@@ -1,0 +1,112 @@
+---
+import HealthPanel from "@/components/HealthPanel.astro"
+import ThemeToggle from "@/components/ThemeToggle.astro"
+import Button from "@/components/ui/Button.astro"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="BTPhoto Private Cloud"
+  description="Saját infrastruktúrára tervezett privát fotós munkafolyamat és ügyfélgaléria."
+>
+  <div class="site-frame">
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="BTPhoto Private Cloud kezdőlap">
+        <span class="wordmark__mark" aria-hidden="true"></span>
+        <span>
+          <strong>BTPHOTO</strong>
+          <small>PRIVATE CLOUD</small>
+        </span>
+      </a>
+
+      <div class="site-header__actions">
+        <span class="build-label">ASTRO / WALKING SKELETON</span>
+        <ThemeToggle />
+      </div>
+    </header>
+
+    <main id="fo-tartalom">
+      <section class="hero" aria-labelledby="hero-title">
+        <canvas class="hero__wave" data-wave-canvas aria-hidden="true"></canvas>
+        <div class="hero__contours" aria-hidden="true"></div>
+        <div class="hero__copy" data-scroll-motion data-scroll-factor="0.055">
+          <p class="hero__kicker reveal reveal--1">
+            <span class="live-marker" aria-hidden="true"></span>
+            SAJÁT INFRASTRUKTÚRA / PRIVÁT MUNKAFOLYAMAT
+          </p>
+          <h1 id="hero-title" class="reveal reveal--2">
+            <span>BTPhoto</span>
+            <span class="hero__outline">Private Cloud</span>
+          </h1>
+          <div class="hero__summary reveal reveal--3">
+            <p>
+              A fotók kezelése, átadása és kiválasztása egy kontrollált,
+              saját infrastruktúrán működő rendszerben.
+            </p>
+            <div class="hero__actions">
+              <Button class="primary-action" href="#rendszerallapot">
+                <span>Rendszerállapot</span>
+                <span aria-hidden="true">↓</span>
+              </Button>
+              <Button class="primary-action" href="#principles-title" variant="outline">
+                <span>Rendszerelvek</span>
+                <span aria-hidden="true">↓</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__panel reveal reveal--4" data-scroll-motion data-scroll-factor="-0.04">
+          <HealthPanel />
+        </div>
+
+        <div class="hero__coordinates" aria-hidden="true">
+          <span>47.4979° N</span>
+          <span>19.0402° E</span>
+        </div>
+      </section>
+
+      <section class="principles" aria-labelledby="principles-title">
+        <header data-reveal>
+          <p class="technical-label">RENDSZERELVEK / 003</p>
+          <h2 id="principles-title">A képeknek hely kell.<br />A bizalomnak rendszer.</h2>
+        </header>
+        <ol class="principles__list">
+          <li data-reveal>
+            <span>01</span>
+            <div>
+              <h3>Saját infrastruktúra</h3>
+              <p>Az adatok és a fotók a BTPhoto által felügyelt környezetben maradnak.</p>
+            </div>
+          </li>
+          <li data-reveal>
+            <span>02</span>
+            <div>
+              <h3>Privát galériák</h3>
+              <p>Az ügyfélélmény képcentrikus, a hozzáférés pedig kontrollált.</p>
+            </div>
+          </li>
+          <li data-reveal>
+            <span>03</span>
+            <div>
+              <h3>Követhető munkafolyamat</h3>
+              <p>A galéria létrehozásától a kiválasztásig minden állapot egyértelmű.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <div class="marquee" aria-label="BTPhoto szolgáltatási területek">
+        <div class="marquee__track">
+          <span>PRIVÁT GALÉRIA</span><i></i><span>CLIENT PROOFING</span><i></i><span>SAJÁT TÁRHELY</span><i></i><span>ELLENŐRZÖTT HOZZÁFÉRÉS</span><i></i>
+          <span aria-hidden="true">PRIVÁT GALÉRIA</span><i aria-hidden="true"></i><span aria-hidden="true">CLIENT PROOFING</span><i aria-hidden="true"></i><span aria-hidden="true">SAJÁT TÁRHELY</span><i aria-hidden="true"></i><span aria-hidden="true">ELLENŐRZÖTT HOZZÁFÉRÉS</span><i aria-hidden="true"></i>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 BTPHOTO PRIVATE CLOUD</span>
+      <span>FEJLESZTÉSI CHECKPOINT / ASTRO 7</span>
+    </footer>
+  </div>
+</BaseLayout>

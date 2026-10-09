@@ -1,0 +1,51 @@
+---
+type Props = {
+  href?: string
+  type?: "button" | "submit" | "reset"
+  variant?: "solid" | "outline" | "text"
+  size?: "small" | "medium"
+  disabled?: boolean
+  class?: string
+  ariaLabel?: string
+}
+
+const {
+  href,
+  type = "button",
+  variant = "solid",
+  size = "medium",
+  disabled = false,
+  class: className = "",
+  ariaLabel,
+} = Astro.props
+
+const classes = ["ui-button", `ui-button--${variant}`, `ui-button--${size}`, className]
+  .filter(Boolean)
+  .join(" ")
+const buttonVariant = variant === "solid" ? "filled" : variant === "outline" ? "outline" : undefined
+---
+
+{
+  href ? (
+    <a
+      class={classes}
+      href={disabled ? undefined : href}
+      aria-label={ariaLabel}
+      aria-disabled={disabled || undefined}
+      tabindex={disabled ? -1 : undefined}
+      data-button-variant={buttonVariant}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      class={classes}
+      type={type}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      data-button-variant={buttonVariant}
+    >
+      <slot />
+    </button>
+  )
+}
