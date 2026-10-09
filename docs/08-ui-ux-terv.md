@@ -22,9 +22,9 @@ A cél két, egymással összefüggő, de eltérő használati mód kiszolgálá
 1. **Fotós/Admin felület** – funkcionális, áttekinthető munkafelület ügyfelek, galériák, média és kiválasztások kezelésére.
 2. **Ügyfélgaléria** – képcentrikus, prémium megjelenésű, egyszerű és mobilbarát privát galériaélmény.
 
-A felület vizuális inspirációja a Lovable „Fashion Storefront” artisan storefront sablon iránya: meleg barna–narancs–bézs színvilág, editoriális tipográfia, adaptív grid, nagy vizuális felületek és olyan navigáció, amely nem veszi el a figyelmet a képekről.
+A felület vizuális referenciája a [szabolcskatona.hu](https://szabolcskatona.hu/hu/) ipari-editoriális webes rendszere: erős groteszk tipográfia, technikai monospace címkék, szabályos rács, vékony választóvonalak, világos/sötét témák, oxidvörös hangsúlyok, kontúrvonalas háttérelemek és visszafogott, mégis karakteres mozgás.
 
-A terv **nem a mintaoldal másolata**. A vizuális karakter kerül átültetésre egy fotós privát felhő felhasználási környezetébe.
+A terv **nem a referenciaoldal másolata**. A szerkesztési, tipográfiai, szín- és mozgási elvek kerülnek projekt-specifikusan átültetésre; a BTPhoto saját tartalmat, komponenseket, kontúrvonalas grafikát és márkaelemeket használ.
 
 ---
 
@@ -84,10 +84,9 @@ Az admin és ügyfélfelület ugyanazt a vizuális nyelvet használja, de eltér
 A BTPhoto felületének karaktere:
 
 - prémium, de nem hivalkodó;
-- meleg, emberi;
-- editoriális;
+- ipari-editoriális;
+- precíz és technikai, de nem rideg;
 - fotóközpontú;
-- visszafogottan kézműves/artisan hangulatú;
 - kortárs és professzionális.
 
 A design ne legyen:
@@ -101,29 +100,30 @@ A design ne legyen:
 
 ---
 
-# 3. Vizuális inspiráció
+# 3. Vizuális referencia és adaptáció
 
-A választott Lovable sablonból megtartandó tervezési elvek:
+A `szabolcskatona.hu` oldalból megtartandó tervezési elvek:
 
-- meleg barna, narancs és bézs színrendszer;
-- adaptív grid;
-- editoriális tipográfia;
-- scroll-aware / visszafogott navigáció;
-- nagy képfelületek;
-- mobilon egyszerű navigáció;
-- a tartalom vizuális elsőbbsége.
+- tizenkét oszlopos, fegyelmezett, reszponzív rács;
+- nagy, sűrített groteszk címsorok és monospace műszaki címkék;
+- hidegszürke világos, grafit sötét felület és oxidvörös akcentus;
+- vékony, funkcionális választóvonalak és kevéssé lekerekített panelek;
+- kontúrvonalas és koordináta-jellegű háttérelemek;
+- státuszpontok, adatblokkok és indexszámok;
+- rövid belépő áttűnés, marquee, hover- és témaváltási animáció;
+- mobilon egyszerű navigáció és a tartalom vizuális elsőbbsége.
 
 A BTPhoto-specifikus átalakítás:
 
-| Artisan storefront elem | BTPhoto megfelelő |
+| Referenciaelv | BTPhoto megfelelő |
 | --- | --- |
-| termékgrid | fotógaléria |
-| collection page | ügyfélgaléria |
-| product detail | lightbox / képnézet |
-| cart state | selection state |
-| collection filter | galéria státusz / admin szűrés |
-| brand storytelling | fotózás címe, dátuma, rövid leírás |
-| stockist/admin oldal | fotós admin felület |
+| projekt-/esettanulmány-rács | fotógaléria és galérialista |
+| technikai adatblokk | galéria-, média- és rendszerstátusz |
+| kontúrvonalas háttér | saját, fotózáshoz és infrastruktúrához kötődő absztrakt grafika |
+| nagyméretű display tipográfia | galéria- és adminoldal főcíme |
+| indexált tartalmi sor | ügyfél-, galéria- és kiválasztási lista |
+| oxidvörös kiemelés | CTA, fókusz, kijelölés és élő állapot |
+| animált témaváltás | megőrzött világos/sötét felhasználói beállítás |
 
 ---
 
@@ -217,110 +217,70 @@ A navigáció scroll közben keskeny sticky headerre válthat.
 
 ---
 
-# 6. Színrendszer
+# 6. Szín- és témarendszer
 
-A paletta a Lovable artisan irányból származtatott BTPhoto design token készlet.
+A BTPhoto két teljes, szemantikusan azonos design token készletet használ. A világos és sötét téma nem külön oldalváltozat: ugyanazokat a komponenseket, állapotokat és információs hierarchiát jeleníti meg.
 
-A színértékek **projekt-specifikus javasolt tokenek**, nem a sablonból szó szerint átvett hex kódok.
+## 6.1 Világos téma
 
-## 6.1 Brand színek
+| Token | Érték | Használat |
+| --- | --- | --- |
+| `Ground` | `#E7E9EC` | fő háttér |
+| `Panel` | `#F4F5F7` | kiemelt felület és panel |
+| `Panel 2` | `#DDE0E5` | másodlagos blokk, skeleton |
+| `Ink` | `#151A21` | fő szöveg, tömör CTA |
+| `Slate` | `#5A6471` | másodlagos szöveg, metaadat |
+| `Oxide` | `#B5381F` | akcentus, fókusz, aktív állapot |
+| `Rule` | `rgba(21, 26, 33, 0.15)` | finom választóvonal |
+| `Rule Strong` | `rgba(21, 26, 33, 0.34)` | erős szerkezeti vonal |
 
-### `Canvas Cream`
-`#F4EDE4`
+## 6.2 Sötét téma
 
-Használat:
-- fő világos háttér;
-- publikus gallery háttér;
-- világos admin panelek.
-
-### `Soft Linen`
-`#E7D8C8`
-
-Használat:
-- secondary felületek;
-- badge háttér;
-- finom blokkszeparáció.
-
-### `Editorial Ink`
-`#241A16`
-
-Használat:
-- fő szöveg;
-- sötét gomb;
-- header;
-- lightbox háttér alapja.
-
-### `Walnut Brown`
-`#4A3026`
-
-Használat:
-- másodlagos brandfelület;
-- navigáció;
-- admin kiemelés.
-
-### `Terracotta`
-`#B86F4C`
-
-Használat:
-- primary accent;
-- kijelölés;
-- aktív állapot;
-- fő CTA bizonyos világos felületeken.
-
-### `Copper Amber`
-`#D49A67`
-
-Használat:
-- hover;
-- secondary accent;
-- soft badge.
-
-### `Warm Sand`
-`#D8C1AB`
-
-Használat:
-- border;
-- input background;
-- neutrális panel.
-
-## 6.2 Sötét fotófelület
-
-### `Gallery Night`
-`#171310`
-
-### `Gallery Surface`
-`#241F1B`
-
-### `Gallery Text`
-`#F6F0E9`
-
-### `Gallery Muted`
-`#BBAFA5`
-
-A lightbox és opcionális dark gallery megjelenítés ezeket használja.
+| Token | Érték | Használat |
+| --- | --- | --- |
+| `Ground` | `#101418` | fő háttér |
+| `Panel` | `#171C22` | kiemelt felület és panel |
+| `Panel 2` | `#20262E` | másodlagos blokk, skeleton |
+| `Ink` | `#E4E7EB` | fő szöveg |
+| `Slate` | `#8C97A5` | másodlagos szöveg, metaadat |
+| `Oxide` | `#F26B4A` | akcentus, fókusz, aktív állapot |
+| `Rule` | `rgba(228, 231, 235, 0.14)` | finom választóvonal |
+| `Rule Strong` | `rgba(228, 231, 235, 0.32)` | erős szerkezeti vonal |
 
 ## 6.3 Állapotszínek
 
-A státuszszínek maradjanak visszafogottak, ne „enterprise neon” jellegűek.
+A státuszszínek mindkét témában külön tokenértéket kapnak, és mindig szöveggel vagy ikonnal együtt jelennek meg.
 
-- Success: `#657A5A`
-- Warning: `#B8843F`
-- Error: `#A55343`
-- Info: `#687A84`
+| Állapot | Világos | Sötét |
+| --- | --- | --- |
+| Success | `#2F6B4F` | `#6FBF95` |
+| Warning | `#8A5A12` | `#D9A441` |
+| Error | `#9B3122` | `#FF8068` |
+| Info | `#4D6678` | `#85A6BD` |
 
-## 6.4 Interakciós szabályok
+## 6.4 Témaválasztás
+
+- első látogatáskor az operációs rendszer `prefers-color-scheme` értéke érvényesül;
+- a fejlécben mindig elérhető világos/sötét témaváltó;
+- a kézi választás `localStorage` használatával megmarad;
+- a téma az első kirajzolás előtt alkalmazandó a hibás témafelvillanás csökkentésére;
+- a böngésző `color-scheme` értéke kövesse az aktív témát;
+- a témaváltó felirata és `aria-label` értéke jelezze a következő állapotot.
+
+## 6.5 Interakciós szabályok
 
 Primary action:
-- `Editorial Ink` vagy `Terracotta` alap;
-- magas kontrasztú világos szöveg.
+- `Ink` alap és kontrasztos inverz szöveg;
+- hover/focus állapotban `Oxide` akcentus.
 
 Selected photo:
-- terracotta/copper outline;
-- check ikon;
-- opcionális enyhe overlay.
+- `Oxide` outline;
+- check ikon és szöveges jelzés;
+- opcionális, témához igazodó overlay.
 
 Destructive:
-- kizárólag valóban destruktív műveletnél error szín.
+- kizárólag valóban destruktív műveletnél error szín;
+- megerősítő szöveg nélkül nem lehet csak színre támaszkodni.
 
 ---
 
@@ -328,18 +288,19 @@ Destructive:
 
 ## 7.1 Betűpárosítás
 
-Javasolt irány:
+Elfogadott irány:
 
-### Címsor / editoriális
-`Cormorant Garamond`
+### Display és főcím
+`Archivo Variable`
 
 Használat:
 - ügyfélgaléria címe;
 - landing/hero cím;
-- nagy section heading.
+- nagy section heading;
+- sűrített, nagybetűs indexcímek.
 
 ### UI / törzsszöveg
-`Manrope`
+`IBM Plex Sans Variable`
 
 Használat:
 - navigáció;
@@ -349,14 +310,23 @@ Használat:
 - metaadat;
 - body.
 
-A két font együtt megtartja a korábbi designminta editoriális jellegét, miközben az adminfelület funkcionális marad.
+### Technikai címke és adat
+`IBM Plex Mono`
+
+Használat:
+- státuszcímke;
+- koordináta, dátum és technikai adat;
+- badge és index;
+- rövid műveleti felirat.
+
+A három betűcsalád helyben csomagolandó, így a megjelenítés nem függ külső fontszolgáltatástól.
 
 ## 7.2 Tipográfiai skála
 
 Desktop:
 
-- Display: `64–88px`
-- H1: `44–52px`
+- Display: `88–168px`
+- H1: `52–88px`
 - H2: `30–36px`
 - H3: `22–26px`
 - Body L: `18px`
@@ -366,18 +336,19 @@ Desktop:
 
 Mobil:
 
-- Display: `42–52px`
-- H1: `34–40px`
+- Display: `56–100px`
+- H1: `38–56px`
 - H2: `26–30px`
 - H3: `20–22px`
 - Body: `16px`
 
 ## 7.3 Tipográfiai szabály
 
-- nagy serif címsorokhoz nagy whitespace;
-- admin UI-ban serif csak fő page title-oknál;
-- gomb, badge és form kizárólag sans-serif;
-- hosszú törzsszövegben ne használjunk vékony serif betűt.
+- a nagy display címsor tömör, sűrített és erős legyen, körülötte nagy negatív térrel;
+- admin felületen a display stílus csak az oldal- és szakaszcímeknél használható;
+- gomb és törzsszöveg sans-serif, technikai adat monospace;
+- monospace hosszú törzsszöveghez nem használható;
+- a tipográfiai hierarchia mindkét témában és mobilon is maradjon egyértelmű.
 
 ---
 
@@ -389,6 +360,7 @@ Admin:
 - desktop max width: `1440px`
 - content max width: kb. `1280px`
 - sidebar: `240–272px`
+- nagy felületeken tizenkét oszlopos szerkezeti rács
 
 Ügyfél:
 - gallery header content max width: `1280–1440px`
@@ -418,16 +390,16 @@ Fő lépcsők:
 ## 8.3 Radius
 
 Admin:
-- input: `10–12px`
-- card: `14–18px`
-- modal: `20px`
+- input: `0–4px`
+- panel: `0–4px`
+- modal: `2–8px`
 
 Ügyfél:
-- gallery card: visszafogott `6–10px`
-- hero/cover: `20–28px`
+- gallery card: `0–4px`
+- hero/cover: `0–8px`
 - pill badge: `999px`
 
-A fotók ne legyenek mindenhol túlzottan lekerekítve; editoriális megjelenésnél az enyhébb radius jobb.
+A pill forma kizárólag rövid státuszjelzéshez használható. A panelek, képek és fő műveletek alapvetően szögletesek; a vizuális hierarchiát elsősorban rács, választóvonal és tipográfia adja.
 
 ---
 
@@ -435,8 +407,8 @@ A fotók ne legyenek mindenhol túlzottan lekerekítve; editoriális megjelenés
 
 Árnyék csak funkcionális hierarchia jelzésére.
 
-### Admin card
-Finom árnyék + meleg border.
+### Admin panel
+Elsősorban vékony `Rule` vagy `Rule Strong` választóvonal. Finom árnyék csak lebegő rétegnél vagy kiemelt rendszerpanelnél.
 
 ### Modal
 Erősebb, de lágy árnyék.
@@ -449,15 +421,17 @@ Hover:
 - selected állapotnál outline fontosabb, mint shadow.
 
 Border:
-- `Warm Sand` áttetsző változata;
-- active/focus: `Terracotta`.
+- témafüggő `Rule` és `Rule Strong` token;
+- active/focus: `Oxide`.
 
 ---
 
-# 10. Ikonrendszer
+# 10. Ikonrendszer és vizuális jelek
 
 Javasolt:
-- Lucide ikonok a shadcn/ui ökoszisztémával.
+- egyszerű, négyzetes végű, saját inline SVG ikonok vagy egységes, keretrendszerfüggetlen ikonkészlet;
+- kis oxidvörös négyzet mint visszatérő állapot- és márkajel;
+- kontúrvonalas, koordináta- és rácsmotívumok kizárólag dekoratív háttérként.
 
 Fő ikonok:
 - User
@@ -977,7 +951,7 @@ Tartalom:
 - opcionális kép darabszám.
 
 Háttér:
-- világos cream alap;
+- az aktív témához tartozó `Ground`/`Panel` alap;
 - vagy visszafogott cover image.
 
 Nem szükséges nagy marketinghero minden galériához.
@@ -1192,20 +1166,43 @@ Admin:
 
 ---
 
-# 25. Animáció
+# 25. Animáció és áttűnés
 
-A BTPhoto nem motion-heavy alkalmazás.
+A mozgás feladata a hierarchia, az állapotváltozás és a navigáció értelmezésének segítése. A referenciaoldal karakteres mozgásnyelvét a BTPhoto rövidebb, funkcionális animációkkal adaptálja.
 
-Engedélyezett:
-- 150–250 ms hover;
-- gallery card fade;
-- modal transition;
-- lightbox fade;
-- sticky header transition.
+Elfogadott mozgási rendszer:
+
+- alap easing: `cubic-bezier(0.16, 1, 0.3, 1)`;
+- hover/focus átmenet: `160–240 ms`;
+- panel- és oldalbelépés: `600–1000 ms`, lépcsőzetes késleltetéssel;
+- modal és lightbox: `180–320 ms` fade/translate;
+- témaváltás: böngészőtámogatás esetén View Transition, egyébként rövid színáttűnés;
+- élő státusz: visszafogott pulzus, szöveges állapot mellett;
+- marquee csak tájékoztató/dekoratív sávban és mérsékelt sebességgel;
+- első belépő animáció munkamenetenként legfeljebb egyszer alkalmazható.
+
+Walking-skeleton interakciós réteg:
+
+- finom és hoverképes mutatón teljes viewportos X/Y tengely, célpont és numerikus koordinátakijelzés;
+- interaktív elem fölött a célpont méret- és kitöltésváltozással jelez, de sem kattintást, sem fókuszt nem fog el;
+- érintős, durva mutatós vagy mobil környezetben a koordinátakurzor kikapcsol, és a natív kurzor nincs elrejtve;
+- a hero dekoratív vonalrendszere canvas-alapú hullámmal reagál a mutatóra és a görgetési pozícióra;
+- a szekciók IntersectionObserver-alapú felfedést, a kijelölt hero blokkok visszafogott, natív scrollhoz kötött eltolást használnak;
+- a görgetést a rendszer nem fogja el és nem időzíti át;
+- a folyamatos rajzolás háttérbe kerülő lapnál szünetel, az inicializálás megszüntethető.
+
+Kötelező fallback:
+
+- `prefers-reduced-motion: reduce` esetén a belépő, pulzáló, marquee és témaváltási animáció gyakorlatilag azonnal fusson le vagy álljon le;
+- animáció nélkül is minden tartalom, állapot és művelet elérhető legyen;
+- a health, upload vagy selection állapot nem közölhető kizárólag mozgással.
+- a hullám és parallax kikapcsol, a koordinátakijelzés simítás nélkül frissül;
+- a scroll-felfedés nem tarthat tartalmat rejtve.
 
 Kerülendő:
+- görgetést akadályozó vagy tartalmat elrejtő intro;
 - túlzott parallax;
-- folyamatos mozgás;
+- öncélú folyamatos mozgás;
 - látványos card flip;
 - lassú marketing animáció a proofing flow-ban.
 
@@ -1283,17 +1280,15 @@ A pontos URL-kontraktus a `03-funkcionalis-kovetelmenyek.md` implementációjako
 
 # 28. Frontend komponensstruktúra
 
-Javasolt:
+Elfogadott Astro-struktúra:
 
 ```text
 frontend/src/
-├── app/
-│   ├── router/
-│   └── providers/
 ├── components/
 │   ├── ui/
 │   ├── layout/
 │   └── feedback/
+├── layouts/
 ├── features/
 │   ├── auth/
 │   ├── clients/
@@ -1301,23 +1296,44 @@ frontend/src/
 │   ├── media/
 │   ├── shares/
 │   └── selection/
+├── api/
+├── lib/
 ├── pages/
 │   ├── admin/
-│   └── public/
-├── api/
-├── hooks/
-├── lib/
+│   └── g/
+├── scripts/
 └── styles/
 ```
+
+Architektúra-elv:
+- statikus szerkezet és tartalom Astro komponensben;
+- kliensoldali TypeScript kizárólag interaktív részekhez;
+- API-hívás központosított `api/` modulból;
+- összetett interakció később indokolt esetben külön Astro islandként vezethető be;
+- teljes oldalra kiterjedő kliensoldali futtatókörnyezet nem alapértelmezett.
 
 ## Design token helye
 
 Például:
 - Tailwind theme;
 - CSS custom properties;
-- `styles/tokens.css`.
+- `styles/tokens.css` vagy a globális stílus tokenrétege.
 
 A komponensek ne hardcode-olják mindenhol ugyanazokat a hex kódokat.
+
+Megvalósított UI Slice 0 komponensek:
+
+| Komponens | Astro megvalósítás | Kötelező szemantika |
+| --- | --- | --- |
+| Button | `components/ui/Button.astro` | link/gomb szerep, tiltott állapot, látható fókusz |
+| Input | `components/ui/Input.astro` | label, leírás, `aria-invalid`, szöveges hiba |
+| Card | `components/ui/Card.astro` | szemantikus tartalmi konténer és opcionális fejléc |
+| Badge | `components/ui/Badge.astro` | tokenalapú neutral/accent/success/warning/error tónus |
+| Toast | `components/ui/Toast.astro` + `scripts/toast.ts` | udvarias élő régió, hiba esetén `alert`, bezárás |
+| Dialog | `components/ui/Dialog.astro` + `scripts/dialog.ts` | natív modal, kezdőfókusz, Tab-kör, Escape és fókusz-visszaadás |
+| LoadingState | `components/feedback/LoadingState.astro` | `role=status`, `aria-busy`, szöveges állapot |
+| EmptyState | `components/feedback/EmptyState.astro` | saját címkézett szekció és műveleti slot |
+| ErrorState | `components/feedback/ErrorState.astro` | `role=alert`, szöveges hiba és műveleti slot |
 
 ---
 
@@ -1327,28 +1343,31 @@ Példa:
 
 ```css
 :root {
-  --background: #F4EDE4;
-  --surface: #FFF9F3;
-  --surface-muted: #E7D8C8;
+  --ground: #E7E9EC;
+  --panel: #F4F5F7;
+  --panel-2: #DDE0E5;
+  --ink: #151A21;
+  --slate: #5A6471;
+  --rule: rgb(21 26 33 / 15%);
+  --rule-strong: rgb(21 26 33 / 34%);
+  --oxide: #B5381F;
+  --success: #2F6B4F;
+  --warning: #8A5A12;
+  --error: #9B3122;
+}
 
-  --foreground: #241A16;
-  --foreground-muted: #6E625B;
-
-  --primary: #241A16;
-  --primary-foreground: #F6F0E9;
-
-  --accent: #B86F4C;
-  --accent-soft: #D49A67;
-
-  --border: #D8C1AB;
-
-  --success: #657A5A;
-  --warning: #B8843F;
-  --destructive: #A55343;
-
-  --gallery-bg: #171310;
-  --gallery-surface: #241F1B;
-  --gallery-text: #F6F0E9;
+:root[data-theme="dark"] {
+  --ground: #101418;
+  --panel: #171C22;
+  --panel-2: #20262E;
+  --ink: #E4E7EB;
+  --slate: #8C97A5;
+  --rule: rgb(228 231 235 / 14%);
+  --rule-strong: rgb(228 231 235 / 32%);
+  --oxide: #F26B4A;
+  --success: #6FBF95;
+  --warning: #D9A441;
+  --error: #FF8068;
 }
 ```
 
@@ -1362,8 +1381,10 @@ A UI-t ne az összes képernyő egyszerre történő megépítésével kezdjük.
 
 ## UI Slice 0 – Design system skeleton
 
-- global tokenek;
-- font;
+- Astro layout és komponensalap;
+- világos/sötét globális tokenek;
+- rendszerpreferenciát követő, megőrzött témaválasztás;
+- helyben csomagolt fontok;
 - button;
 - input;
 - card;
@@ -1414,6 +1435,11 @@ Képernyők:
 | mobil gallery | `TC-UI-0001` |
 | keyboard proofing | `TC-UI-0002` |
 | selected state | `TC-UI-0003` |
+| világos/sötét témarendszer | `TC-UI-0004` |
+| mozgáscsökkentett megjelenés | `TC-UI-0005` |
+| koordinátakurzor és eszközfüggő fallback | `TC-UI-0006` |
+| hullám/scroll mozgás és életciklus | `TC-UI-0007` |
+| UI Slice 0 komponensek hozzáférhetősége | `TC-UI-0008` |
 | első teljes admin flow | `TC-E2E-0001` |
 | privát galéria | `TC-E2E-0002` |
 | proofing | `TC-E2E-0003` |
@@ -1425,16 +1451,15 @@ Képernyők:
 
 Nem szükséges mindet az MVP fejlesztés megkezdése előtt lezárni.
 
-1. A publikus galéria világos vagy sötét alapú legyen-e véglegesen?
-2. Galériagrid masonry vagy szabályos adaptív grid legyen?
-3. Gallery hero használjon-e cover képet?
-4. A kiválasztási ikon szív vagy check legyen?
-5. Az admin dashboard szükséges-e már az első release-ben, vagy a Galériák oldal legyen a kezdőképernyő?
-6. A selection véglegesítés után módosítható-e?
-7. A share panel egy aktív vagy több aktív linket kezeljen?
-8. Bulk letöltésengedélyezés szükséges-e az MVP után? (Az MVP döntés: média-szintű, default tiltott.)
-9. Készüljön-e saját BTPhoto logó vagy első körben csak tipográfiai wordmark?
-10. A fotós neve / vállalkozás neve mennyire legyen testreszabható ügyféloldalon?
+1. Galériagrid masonry vagy szabályos adaptív grid legyen?
+2. Gallery hero használjon-e cover képet?
+3. A kiválasztási ikon szív vagy check legyen?
+4. Az admin dashboard szükséges-e már az első release-ben, vagy a Galériák oldal legyen a kezdőképernyő?
+5. A selection véglegesítés után módosítható-e?
+6. A share panel egy aktív vagy több aktív linket kezeljen?
+7. Bulk letöltésengedélyezés szükséges-e az MVP után? (Az MVP döntés: média-szintű, default tiltott.)
+8. Készüljön-e saját BTPhoto logó vagy első körben csak tipográfiai wordmark?
+9. A fotós neve / vállalkozás neve mennyire legyen testreszabható ügyféloldalon?
 
 ---
 
@@ -1468,11 +1493,15 @@ Szakirodalmi háttér:
 
 [4] Garrett, J. J.: *The Elements of User Experience: User-Centered Design for the Web and Beyond*. 2nd Edition. New Riders, 2010.
 
-Vizuális referencia:
+Vizuális és technikai referenciák:
 
-- Lovable – Fashion Storefront / artisan fashion storefront template
-- átvett tervezési elvek: meleg artisan paletta, editoriális tipográfia, adaptív grid, képcentrikus elrendezés és mobilbarát navigáció
-- a konkrét BTPhoto színkódok és komponensrendszer saját projekt-specifikus adaptáció
+- Katona Szabolcs – [szabolcskatona.hu](https://szabolcskatona.hu/hu/)
+- átvett tervezési elvek: világos/sötét téma, ipari-editoriális tipográfia, technikai címkék, strukturált rács, oxidvörös akcentus, kontúrvonalas vizuál és visszafogott mozgás
+- a konkrét BTPhoto tartalom, komponensek, grafikai elemek és interakciók saját projekt-specifikus adaptációk
+- Astro dokumentáció – [Astro Components](https://docs.astro.build/en/basics/astro-components/)
+- Astro dokumentáció – [Testing](https://docs.astro.build/en/guides/testing/)
+- Astro dokumentáció – [View transitions](https://docs.astro.build/en/guides/view-transitions/)
+- Astro dokumentáció – [Styling and Tailwind](https://docs.astro.build/en/guides/styling/)
 
 ---
 
@@ -1485,4 +1514,4 @@ A `GAP-001` lezárult:
 - `FR-DWN-0002`
 - média-szintű, alapértelmezetten tiltott letöltési jogosultság.
 
-A következő fázis a repository és fejlesztési környezet előkészítése, majd a walking skeleton és az első vertikális feature.
+A frontend technológiai és vizuális baseline Astro 7, TypeScript, Tailwind CSS, valamint teljes világos/sötét témarendszer. A frontend checkpoint lezárása után folytatható a CockroachDB/Flyway walking skeleton, majd az első vertikális feature.

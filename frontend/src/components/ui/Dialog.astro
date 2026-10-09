@@ -1,0 +1,66 @@
+---
+type Props = {
+  id: string
+  title: string
+  description?: string
+  triggerLabel: string
+  closeLabel?: string
+}
+
+const {
+  id,
+  title,
+  description,
+  triggerLabel,
+  closeLabel = "Bezárás",
+} = Astro.props
+
+const titleId = `${id}-title`
+const descriptionId = description ? `${id}-description` : undefined
+---
+
+<div class="dialog-root" data-dialog-root>
+  <button class="ui-button ui-button--outline ui-button--medium" type="button" data-dialog-open aria-controls={id}>
+    {triggerLabel}
+  </button>
+  <dialog
+    class="ui-dialog"
+    id={id}
+    data-dialog
+    aria-labelledby={titleId}
+    aria-describedby={descriptionId}
+  >
+    <div class="ui-dialog__surface">
+      <header class="ui-dialog__header">
+        <div>
+          <p class="technical-label">BTPHOTO / DIALOG</p>
+          <h2 id={titleId}>{title}</h2>
+        </div>
+        <button class="ui-dialog__close" type="button" data-dialog-close aria-label={closeLabel}>
+          <span aria-hidden="true">×</span>
+        </button>
+      </header>
+      {description && <p class="ui-dialog__description" id={descriptionId}>{description}</p>}
+      <div class="ui-dialog__body"><slot /></div>
+      <footer class="ui-dialog__footer"><slot name="footer" /></footer>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  import { mountDialog } from "@/scripts/dialog"
+
+  function initializeDialogs() {
+    document.querySelectorAll<HTMLElement>("[data-dialog-root]").forEach((root) => {
+      if (root.dataset.initialized === "true") {
+        return
+      }
+
+      root.dataset.initialized = "true"
+      mountDialog(root)
+    })
+  }
+
+  initializeDialogs()
+  document.addEventListener("astro:page-load", initializeDialogs)
+</script>

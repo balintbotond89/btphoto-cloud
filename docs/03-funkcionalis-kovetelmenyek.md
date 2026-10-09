@@ -374,7 +374,7 @@ A pontos státuszmodell a funkciók bővülésével később kiterjeszthető.
 - Státusz: elfogadott
 - Prioritás: kritikus
 - Leírás: A rendszer tegye lehetővé JPEG kép feltöltését létező galériához úgy, hogy a bináris fájl az NFSv4 média storage-ra, a hozzá tartozó metaadat pedig CockroachDB-be kerüljön.
-- Részletes leírás: Ez a projekt elsődleges end-to-end architektúra-validációs funkciója. A feltöltésnek össze kell kapcsolnia a React frontend, Spring Boot backend, NFS media storage és CockroachDB rétegeket.
+- Részletes leírás: Ez a projekt elsődleges end-to-end architektúra-validációs funkciója. A feltöltésnek össze kell kapcsolnia az Astro frontend, Spring Boot backend, NFS media storage és CockroachDB rétegeket.
 
 ## IPO modell
 
@@ -1301,7 +1301,7 @@ A teljes funkcionális specifikációból az első tényleges fejlesztési sprin
 Ez a szelet azt bizonyítja, hogy a teljes alaparchitektúra működik:
 
 ```text
-React frontend
+Astro frontend
       ↓
 Spring Boot backend
       ├──────────────→ CockroachDB / sql01
@@ -1337,7 +1337,7 @@ A jelen FR készlet alapján a következő dokumentumok már konkrétan levezeth
 Rögzítendő többek között:
 
 - Java 21 / Spring Boot 3
-- React / TypeScript / Vite
+- Astro 7 / TypeScript / Tailwind CSS
 - CockroachDB
 - PostgreSQL JDBC
 - JPA

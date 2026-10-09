@@ -1,0 +1,51 @@
+---
+import "@fontsource-variable/archivo"
+import "@fontsource-variable/ibm-plex-sans"
+import "@fontsource/ibm-plex-mono/400.css"
+import "@fontsource/ibm-plex-mono/500.css"
+import "@/styles/globals.css"
+import MotionOverlay from "@/components/MotionOverlay.astro"
+
+type Props = {
+  title: string
+  description: string
+}
+
+const { title, description } = Astro.props
+---
+
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e7e9ec" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#101418" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23b5381f%22/><path d=%22M17 23h8l3-5h8l3 5h8v24H17z%22 fill=%22none%22 stroke=%22white%22 stroke-width=%224%22/><circle cx=%2232%22 cy=%2235%22 r=%227%22 fill=%22none%22 stroke=%22white%22 stroke-width=%224%22/></svg>" />
+    <title>{title}</title>
+    <script is:inline>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem("btphoto-theme")
+          const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          const theme = storedTheme === "light" || storedTheme === "dark"
+            ? storedTheme
+            : systemTheme
+          document.documentElement.dataset.theme = theme
+          document.documentElement.style.colorScheme = theme
+        } catch {
+          document.documentElement.dataset.theme = "light"
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#fo-tartalom">Ugrás a fő tartalomra</a>
+    <MotionOverlay />
+    <slot />
+  </body>
+</html>

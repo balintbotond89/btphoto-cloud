@@ -1,0 +1,53 @@
+<section class="health-panel" id="rendszerallapot" data-health-panel aria-labelledby="health-heading">
+  <header class="health-panel__header">
+    <p class="technical-label">RENDSZERKAPCSOLAT / 001</p>
+    <span class="status-chip" data-health-state data-status="loading">
+      <span class="status-chip__marker" aria-hidden="true"></span>
+      <span data-health-state-label>ELLENŐRZÉS</span>
+    </span>
+  </header>
+
+  <div class="health-panel__surface" data-health-surface data-status="loading" aria-live="polite">
+    <div class="health-panel__index" aria-hidden="true">01</div>
+    <div>
+      <p class="health-panel__eyebrow">SPRING BOOT / PUBLIC API</p>
+      <h2 id="health-heading" data-health-title>Kapcsolat ellenőrzése</h2>
+      <p data-health-description>
+        A frontend lekérdezi a backend nyilvános health végpontját.
+      </p>
+      <button class="text-action" type="button" data-health-retry hidden>
+        <span>Újrapróbálás</span>
+        <span aria-hidden="true">↗</span>
+      </button>
+    </div>
+  </div>
+
+  <dl class="health-panel__facts">
+    <div>
+      <dt>VÉGPONT</dt>
+      <dd>/api/health</dd>
+    </div>
+    <div>
+      <dt>ELVÁRT VÁLASZ</dt>
+      <dd>HTTP 200 / UP</dd>
+    </div>
+  </dl>
+</section>
+
+<script>
+  import { mountHealthPanel } from "@/scripts/health-panel"
+
+  function initializeHealthPanels() {
+    document.querySelectorAll<HTMLElement>("[data-health-panel]").forEach((panel) => {
+      if (panel.dataset.initialized === "true") {
+        return
+      }
+
+      panel.dataset.initialized = "true"
+      mountHealthPanel(panel)
+    })
+  }
+
+  initializeHealthPanels()
+  document.addEventListener("astro:page-load", initializeHealthPanels)
+</script>

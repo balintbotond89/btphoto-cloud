@@ -709,7 +709,7 @@ Az MVP fő üzleti útvonalai:
 - Prioritás: magas
 - Kapcsolódó NFR: `NFR-MNT-0002`
 - Kapcsolódó TR: `TR-TCH-0002`
-- Leírás: TypeScript check, lint és production build sikeresen lefut.
+- Leírás: Astro/TypeScript check, lint, Vitest tesztfuttatás és production build sikeresen lefut.
 
 ---
 
@@ -851,6 +851,62 @@ Az MVP fő üzleti útvonalai:
 - Típus: UI review
 - Prioritás: magas
 - Leírás: A selected állapot ikon/szöveg/shape segítségével is megkülönböztethető.
+
+## TC-UI-0004 – Világos és sötét téma
+
+- Teszt azonosító: `TC-UI-0004`
+- Teszt neve: Világos és sötét témarendszer
+- Típus: unit/UI/manual/E2E
+- Prioritás: magas
+- Kapcsolódó NFR: `NFR-USB-0002`
+- Kapcsolódó TR: `TR-TCH-0002`
+- Előfeltétel: a böngésző világos és sötét rendszerpreferenciája beállítható, a helyi témaérték törölhető.
+- Leírás:
+  - mentett érték nélkül a felület a rendszerpreferenciát követi;
+  - a kézi témaváltás azonnal alkalmazódik és újratöltés után is megmarad;
+  - mindkét témában azonos tartalom, fókuszjelzés és állapotinformáció érhető el;
+  - a betöltés elején nem marad tartós, hibás témájú felvillanás.
+
+## TC-UI-0005 – Mozgáscsökkentett megjelenés
+
+- Teszt azonosító: `TC-UI-0005`
+- Teszt neve: `prefers-reduced-motion` támogatás
+- Típus: UI/manual/E2E
+- Prioritás: magas
+- Kapcsolódó NFR: `NFR-USB-0002`
+- Kapcsolódó TR: `TR-TCH-0002`
+- Előfeltétel: a böngésző `prefers-reduced-motion: reduce` módja aktív.
+- Leírás: A bevezető, témaváltási, pulzáló és folyamatos marquee animációk leállnak vagy gyakorlatilag azonnal lefutnak; a hullám és parallax nem animálódik, a koordinátakijelzés simítás nélkül működik, miközben minden tartalom és művelet elérhető marad.
+
+## TC-UI-0006 – Koordinátakurzor eszközfüggő működése
+
+- Teszt azonosító: `TC-UI-0006`
+- Teszt neve: Koordinátakurzor és interaktív hover állapot
+- Típus: unit/UI/manual
+- Prioritás: közepes
+- Kapcsolódó NFR: `NFR-USB-0002`, `NFR-PER-0001`
+- Kapcsolódó TR: `TR-TCH-0002`
+- Leírás: Finom, hoverképes mutatón az X/Y tengely, célpont és koordinátakijelzés követi a mutatót, interaktív elem felett megkülönböztethető állapotot jelez; érintős vagy durva mutatós eszközön a réteg és a natív kurzor elrejtése nem aktív.
+
+## TC-UI-0007 – Hullám- és scrollmozgás életciklusa
+
+- Teszt azonosító: `TC-UI-0007`
+- Teszt neve: Natív scroll melletti animáció és erőforrás-kezelés
+- Típus: unit/UI/manual
+- Prioritás: közepes
+- Kapcsolódó NFR: `NFR-USB-0002`, `NFR-PER-0001`
+- Kapcsolódó TR: `TR-TCH-0002`
+- Leírás: Normál és gyors görgetéskor a hullám, felfedés és visszafogott parallax nem akadályozza a natív scrollt; rejtett dokumentumnál a folyamatos képkockaciklus szünetel, megszüntetéskor az eseményfigyelők és observerek felszabadulnak.
+
+## TC-UI-0008 – Újrafelhasználható UI-komponensek hozzáférhetősége
+
+- Teszt azonosító: `TC-UI-0008`
+- Teszt neve: Alapkomponensek szemantikája és billentyűzetes működése
+- Típus: unit/accessibility/manual
+- Prioritás: magas
+- Kapcsolódó NFR: `NFR-USB-0001`, `NFR-USB-0002`
+- Kapcsolódó TR: `TR-TCH-0002`
+- Leírás: A Button, Input, Card, Badge, Toast, Dialog és feedback állapotok mindkét témában olvashatók; az Input labelt és szöveges hibát ad, a Toast élő régióban jelenik meg, a Dialog fókuszt kezel, Escape-re zár és bezáráskor visszaadja a fókuszt.
 
 ---
 

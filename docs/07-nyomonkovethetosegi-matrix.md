@@ -51,7 +51,7 @@ A nyomonkövethetőség célja, hogy:
 | BR | Epic / US | FR | Fő NFR | Fő TR | Fő TC |
 | --- | --- | --- | --- | --- | --- |
 | `BR-FNC-0001` Ügyfél- és galériakezelés | Epic 1; `US-0001`, `US-0002`, `US-0003` | `FR-AUT-0001`, `FR-DAT-0001`, `FR-DAT-0002` | `NFR-MNT-0001`, `NFR-DAT-0001`, `NFR-SEC-0001`, `NFR-USB-0001` | `TR-TCH-0001`, `TR-ARC-0001`, `TR-DAT-0001`, `TR-SEC-0001` | `TC-AUT-0001..0003`, `TC-DAT-0001..0006`, `TC-API-0001..0002` |
-| `BR-FNC-0002` Privát ügyfélgaléria és megosztás | Epic 3; `US-0006`, `US-0007` | `FR-SHR-0001`, `FR-SHR-0002` | `NFR-SEC-0001`, `NFR-USB-0001`, `NFR-USB-0002`, `NFR-PER-0001` | `TR-TCH-0002`, `TR-SEC-0001`, `TR-OPS-0001`, `TR-DEP-0001` | `TC-SHR-0001..0005`, `TC-SEC-0001`, `TC-UI-0001`, `TC-E2E-0002` |
+| `BR-FNC-0002` Privát ügyfélgaléria és megosztás | Epic 3; `US-0006`, `US-0007` | `FR-SHR-0001`, `FR-SHR-0002` | `NFR-SEC-0001`, `NFR-USB-0001`, `NFR-USB-0002`, `NFR-PER-0001` | `TR-TCH-0002`, `TR-SEC-0001`, `TR-OPS-0001`, `TR-DEP-0001` | `TC-SHR-0001..0005`, `TC-SEC-0001`, `TC-UI-0001`, `TC-UI-0004`, `TC-UI-0005`, `TC-E2E-0002` |
 | `BR-PRC-0001` Médiafeltöltési és client proofing folyamat támogatása | Epic 2; `US-0004`, `US-0005` | `FR-MED-0001`, `FR-MED-0002` | `NFR-REL-0001`, `NFR-DAT-0001`, `NFR-SEC-0001`, `NFR-PER-0001`, `NFR-OPS-0001` | `TR-STO-0001`, `TR-DAT-0001`, `TR-DAT-0002`, `TR-ARC-0001`, `TR-OPS-0002` | `TC-MED-0001..0007`, `TC-DB-0003`, `TC-OPS-0003`, `TC-E2E-0001` |
 | `BR-PRC-0002` Ügyfélkiválasztás és digitális átadás | Epic 4; `US-0008`, `US-0009`, `US-0010`, `US-0013` | `FR-WFL-0001`, `FR-WFL-0002`, `FR-DWN-0001`, `FR-DWN-0002` | `NFR-DAT-0001`, `NFR-SEC-0001`, `NFR-USB-0002`, `NFR-REL-0001` | `TR-TCH-0001`, `TR-TCH-0002`, `TR-ARC-0001`, `TR-SEC-0001`, `TR-STO-0001` | `TC-WFL-0001..0006`, `TC-DWN-0001..0005`, `TC-E2E-0003` |
 | `BR-DAT-0001` Követhető média- és metaadatmodell | Epic 1, 2, 5; `US-0002`, `US-0003`, `US-0004`, `US-0011` | `FR-DAT-0001`, `FR-DAT-0002`, `FR-MED-0001`, `FR-MED-0002` | `NFR-DAT-0001`, `NFR-MNT-0001`, `NFR-REL-0001` | `TR-DAT-0001`, `TR-DAT-0002`, `TR-ARC-0001`, `TR-STO-0001`, `TR-DEV-0003` | `TC-DAT-*`, `TC-MED-*`, `TC-DB-0001..0004`, `TC-QLT-0001` |
@@ -165,7 +165,7 @@ A nyomonkövethetőség célja, hogy:
 | AC | `AC-FR-SHR-0002-01`, `AC-FR-SHR-0002-02` |
 | NFR | `NFR-SEC-0001`, `NFR-USB-0001`, `NFR-USB-0002`, `NFR-PER-0001`, `NFR-PRV-0001` |
 | TR | `TR-TCH-0002`, `TR-SEC-0001`, `TR-OPS-0001`, `TR-STO-0001` |
-| TC | `TC-SHR-0003`, `TC-SHR-0004`, `TC-SHR-0005`, `TC-UI-0001`, `TC-E2E-0002` |
+| TC | `TC-SHR-0003`, `TC-SHR-0004`, `TC-SHR-0005`, `TC-UI-0001`, `TC-UI-0004`, `TC-UI-0005`, `TC-E2E-0002` |
 
 **Lefedettség:** teljes.
 
@@ -319,9 +319,9 @@ A `GAP-001` lezárásával a letöltési folyamat is teljes BR → US → FR →
 | `NFR-SEC-0001` Jogosultságvédelem | `TR-SEC-0001`, `TR-OPS-0001`, `TR-STO-0001` | `TC-AUT-0003`, `TC-MED-0007`, `TC-SHR-0004`, `TC-SHR-0005`, `TC-SEC-0001..0002`, `TC-DWN-0002` |
 | `NFR-SEC-0002` Secret kezelés | `TR-SEC-0001`, `TR-DEP-0002` | `TC-SEC-0003`, `TC-SEC-0004`, `TC-DEP-0004` |
 | `NFR-MNT-0002` Automatizált quality gate | `TR-DEV-0001`, `TR-DEV-0002`, `TR-DEV-0003`, `TR-DEP-0002` | `TC-QLT-0002`, `TC-QLT-0003`, `TC-DEP-0001` |
-| `NFR-USB-0001` Egységes hiba-visszajelzés | `TR-ARC-0001`, `TR-TCH-0001` | `TC-API-0001`, `TC-API-0002`, `TC-API-0003` |
-| `NFR-USB-0002` Reszponzív és hozzáférhető UI | `TR-TCH-0002` | `TC-UI-0001`, `TC-UI-0002`, `TC-UI-0003` |
-| `NFR-PER-0001` Teljesítmény | `TR-TCH-0002`, `TR-STO-0001`, `TR-OPS-0002` | `TC-PER-0001`, `TC-PER-0002`, `TC-PER-0003` |
+| `NFR-USB-0001` Egységes hiba-visszajelzés | `TR-ARC-0001`, `TR-TCH-0001`, `TR-TCH-0002` | `TC-API-0001`, `TC-API-0002`, `TC-API-0003`, `TC-UI-0008` |
+| `NFR-USB-0002` Reszponzív és hozzáférhető UI | `TR-TCH-0002` | `TC-UI-0001..0008` |
+| `NFR-PER-0001` Teljesítmény | `TR-TCH-0002`, `TR-STO-0001`, `TR-OPS-0002` | `TC-UI-0006`, `TC-UI-0007`, `TC-PER-0001`, `TC-PER-0002`, `TC-PER-0003` |
 | `NFR-OPS-0001` Megfigyelhetőség | `TR-OPS-0001`, `TR-OPS-0002` | `TC-OPS-0001`, `TC-OPS-0002`, `TC-OPS-0003` |
 | `NFR-REC-0001` Backup/restore | `TR-BCK-0001`, `TR-INF-0001` | `TC-REC-0001`, `TC-REC-0002`, `TC-REC-0003`, `TC-REC-0004` |
 | `NFR-DEP-0001` Reprodukálható deployment | `TR-DEP-0001`, `TR-DEP-0002`, `TR-OPS-0002` | `TC-DEP-0001`, `TC-DEP-0002`, `TC-DEP-0003` |
@@ -384,7 +384,7 @@ FR-MED-0002
 Bizonyítja:
 
 - admin security
-- React → Spring kommunikáció
+- Astro → Spring kommunikáció
 - Spring → CockroachDB kommunikáció
 - Spring → NFS media storage kommunikáció
 - metadata + physical media összekapcsolás

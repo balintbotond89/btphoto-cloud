@@ -1,63 +1,66 @@
-# Frontend
+# BTPhoto Frontend
 
-A BTPhoto Private Cloud React frontend walking skeletonje.
+Az első frontend walking skeleton Astro 7 és TypeScript alapú, statikusan építhető felület. A kezdőoldal a Spring Boot backend publikus `GET /api/health` végpontját ellenőrzi, és kezeli a betöltési, sikeres, hibás és újrapróbálási állapotot.
 
 ## Technológiai alap
 
-- Node.js 24 LTS és npm;
-- React 19 és TypeScript;
-- Vite;
-- Tailwind CSS a `@tailwindcss/vite` pluginnal;
-- shadcn/ui-kompatibilis, lokálisan verziózott UI-komponensek;
-- Vitest, jsdom és React Testing Library;
-- ESLint és külön TypeScript typecheck.
+- Astro 7
+- TypeScript 6 szigorú típusrendszerrel
+- Tailwind CSS 4 buildintegráció
+- Astro komponensek és minimális natív kliensoldali TypeScript
+- Vitest + jsdom
+- ESLint Astro- és TypeScript-szabályokkal
+- helyben csomagolt Archivo, IBM Plex Sans és IBM Plex Mono betűkészlet
 
-A támogatott Node főverziót az `.nvmrc` és a `package.json` `engines`
-mezője rögzíti. A telepítés reprodukálható forrása a verziókövetett
-`package-lock.json`.
+A statikus Astro-komponensek alapértelmezetten nem küldenek komponens-futtatókörnyezetet a böngészőbe. Kliensoldali JavaScript csak az interaktív témaváltáshoz és a health végpont lekéréséhez töltődik be.
 
-## Fejlesztés
+## Megjelenés és témakezelés
 
-Telepítés és indítás:
+A felület a `docs/08-ui-ux-terv.md` designrendszerét követi:
 
-```powershell
-npm ci
-npm run dev
-```
+- ipari-editoriális, fotóközpontú vizuális nyelv;
+- világos és sötét tokenkészlet;
+- első látogatáskor rendszerbeállítás szerinti téma;
+- a kézi témaválasztás megőrzése a böngészőben;
+- erős fókuszjelzés és billentyűzetes használhatóság;
+- mozgáscsökkentési rendszerbeállítás tiszteletben tartása.
 
-A fejlesztői szerver a relatív `/api` kéréseket a lokális Spring Boot
-alkalmazás `http://localhost:8080` címére továbbítja. A backend adatbázis
-nélküli, explicit lokális indítása:
+## Helyi futtatás
 
-```powershell
-Set-Location ../backend
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=no-database
-```
-
-Production buildben az API-kliens szintén relatív `/api` útvonalat használ,
-így nem tartalmaz környezetspecifikus backend URL-t.
-
-## Minőségi parancsok
+A backend indítása a repository gyökeréből:
 
 ```powershell
-npm run typecheck
-npm run lint
-npm run test:run
-npm run build
+Set-Location .\backend
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=no-database"
 ```
 
-A `npm run test` figyelő módban indítja a Vitestet, a `npm run test:run`
-egyszeri ellenőrzést végez.
+A frontend indítása egy második terminálban:
 
-## Walking skeleton
+```powershell
+Set-Location .\frontend
+npm.cmd ci
+npm.cmd run dev
+```
 
-A kezdőképernyő a központosított, típusos API-klienssel lekéri a
-`GET /api/health` végpontot, és loading, sikeres `UP`, illetve hibaállapotot
-jelenít meg újrapróbálási lehetőséggel. Az API-válasz futásidőben is
-ellenőrzött.
+A fejlesztői szerver címe: `http://localhost:5173`. A fejlesztői proxy az `/api` kéréseket a `http://localhost:8080` címen futó backendhez továbbítja.
 
-A design system skeleton a `docs/08-ui-ux-terv.md` UI Slice 0 irányát követi:
-központi design tokeneket, editoriális tipográfiát, valamint button, input,
-card, badge, dialog, toast, loading, empty és error komponenseket biztosít.
+## Ellenőrző parancsok
 
-Normatív UI terv: `../docs/08-ui-ux-terv.md`.
+```powershell
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run test:run
+npm.cmd run build
+npm.cmd audit --audit-level=high
+```
+
+## Környezeti követelmények
+
+- Node.js 24.x
+- npm 11.x
+
+A verzióelvárást a `package.json` és a `.nvmrc` is rögzíti.
+
+## Hatókör
+
+Ez a checkpoint nem tartalmaz üzleti admin- vagy galériafunkciót. A cél az Astro buildlánc, a témarendszer, a reszponzív vizuális alap, valamint a frontend–backend kapcsolat igazolása.

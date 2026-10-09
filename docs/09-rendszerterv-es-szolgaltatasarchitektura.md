@@ -242,27 +242,30 @@ Alapelv:
 
 ### Frontend
 
-Tervezett technológia:
-- React
+Elfogadott technológia:
+- Astro 7
 - TypeScript
-- Vite
 - Tailwind CSS
-- shadcn/ui
+- Astro komponensek
+- minimális natív kliensoldali TypeScript
 
 A frontend két fő felületi területre oszlik:
 
 1. admin/fotós felület
 2. ügyféloldali privát galéria
 
-A vizuális irány a megadott Lovable artisan storefront minta hangulatát követi:
-- meleg bézs / krém alapok
-- mély barna árnyalatok
-- réz/narancs kiemelések
-- elegáns, editoriális tipográfia
-- képcentrikus kártyák és grid
-- mobilbarát ügyfélgaléria
+A frontend statikusan előállítható Astro oldalakra és célzott interaktív kliensoldali modulokra tagolódik. A téma inicializálása még az első kirajzolás előtt megtörténik, az API-hívások pedig központosított TypeScript kliensrétegen keresztül érik el a Spring Boot szolgáltatást. Az alapkomponensek Astro markupot használnak; a dialog, toast, health és motion viselkedés külön, natív TypeScript vezérlőmodulokban marad.
 
-A jelenleg feltöltött `08-ui-ux-terv.md` még a korábbi kávés projektre vonatkozik; azt külön BTPhoto verzióra kell átírni. A rendszerterv ezért itt csak a vizuális irányt rögzíti.
+A dekoratív motion-réteg canvas-alapú hero hullámból, finom mutatóhoz kötött koordinátakurzor-rétegből, IntersectionObserver-alapú felfedésből és korlátozott scroll-parallaxból áll. Nem módosítja a natív görgetést, érintős eszközön letiltja a kurzorréteget, `prefers-reduced-motion` esetén megszünteti a folyamatos hullámot és parallaxot, rejtett dokumentumnál pedig szünetelteti a rajzolási ciklust.
+
+A `08-ui-ux-terv.md` dokumentumban rögzített vizuális irány:
+- világos hidegszürke és sötét grafit téma;
+- oxidvörös kiemelés;
+- erős groteszk tipográfia és monospace technikai címkék;
+- tizenkét oszlopos, ipari-editoriális elrendezés;
+- vékony választóvonalak, kontúrvonalak és egyértelmű állapotjelzések;
+- visszafogott áttűnések, állapotanimációk és teljes `prefers-reduced-motion` fallback;
+- képcentrikus, mobilbarát ügyfélgaléria.
 
 ---
 
@@ -666,7 +669,7 @@ Fontos korlátozás:
 | Adatbázis VM | külön `sql01` | felelősség és erőforrás elkülönítése |
 | Adatbázis | CockroachDB | SQL modell, PostgreSQL klienskapcsolat, későbbi bővíthetőség |
 | Backend | Java 21 + Spring Boot | korábbi sikeres projekt és rétegzett architektúra |
-| Frontend | React + TypeScript | modern, képcentrikus webes UI |
+| Frontend | Astro 7 + TypeScript | statikus alapú, célzottan interaktív és képcentrikus webes UI |
 | Reverse proxy | Caddy | egyszerű HTTPS és proxy kezelés |
 | Média storage | NFSv4 MicroServer | fájlok leválasztása az alkalmazás VM-ről |
 | DB migráció | Flyway | verziózott séma |
@@ -796,7 +799,7 @@ A baseline-ban lezárt fontos döntések:
 - CockroachDB külön `sql01` VM-en;
 - Docker alkalmazási környezet külön `docker01` VM-en;
 - NFSv4 média storage;
-- Spring Boot + React;
+- Spring Boot + Astro 7;
 - média-szintű letöltési jogosultság, alapértelmezetten tiltott;
 - követelményvezérelt VS Code + Codex workflow.
 

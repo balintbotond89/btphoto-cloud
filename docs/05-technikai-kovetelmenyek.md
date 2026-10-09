@@ -28,7 +28,7 @@ A dokumentum a korábbi sikeres projekt technikai követelményeinek szerkezeté
 | `TR-INF-0001` | Két virtuális gépes alkalmazás-topológia | elfogadott | kritikus |
 | `TR-NET-0001` | Elkülönített menedzsment-, storage- és belső DB-hálózat | tervezet | magas |
 | `TR-TCH-0001` | Java 21 + Spring Boot 3 backend | elfogadott | kritikus |
-| `TR-TCH-0002` | React + TypeScript + Vite frontend | elfogadott | kritikus |
+| `TR-TCH-0002` | Astro 7 + TypeScript frontend | elfogadott | kritikus |
 | `TR-ARC-0001` | Moduláris rétegzett monolit | elfogadott | kritikus |
 | `TR-DAT-0001` | CockroachDB relációs perzisztencia | elfogadott | kritikus |
 | `TR-DAT-0002` | Flyway verziózott adatbázis-migráció | elfogadott | kritikus |
@@ -274,56 +274,67 @@ Konfiguráció:
 
 ---
 
-# 4. TR-TCH-0002 – React + TypeScript + Vite frontend
+# 4. TR-TCH-0002 – Astro 7 + TypeScript frontend
 
 - TR azonosító: `TR-TCH-0002`
-- TR neve: React + TypeScript + Vite frontend
+- TR neve: Astro 7 + TypeScript frontend
 - Státusz: elfogadott
 - Prioritás: kritikus
 
 ## Részletes leírás
 
-A webes frontend React és TypeScript alapon készüljön Vite buildkörnyezettel.
+A webes frontend Astro 7 és TypeScript alapon készüljön. Az Astro statikus kimenete legyen az alapértelmezett; kliensoldali JavaScript csak az interaktív részekhez kerüljön a böngészőbe.
 
-Tervezett UI stack:
-- React
+Elfogadott UI stack:
+- Astro 7
 - TypeScript
-- Vite
 - Tailwind CSS
-- shadcn/ui
+- Astro komponensek
+- minimális natív kliensoldali TypeScript
+- Vitest + jsdom
+- ESLint + `eslint-plugin-astro`
+- `@astrojs/check`
 
 ## Indoklás és támogatott üzleti cél
 
-A fotós galéria vizuálisan intenzív, interaktív kliensalkalmazás. A React/TypeScript stack támogatja:
-- reszponzív komponensek
-- gallery grid
-- lightbox
-- proofing interakciók
-- admin állapotkezelés
-- jól típusozott API kliens
+A fotós galéria kép- és tartalomközpontú rendszer, amelyben a legtöbb oldal szerkezete statikusan is előállítható, miközben a proofing, lightbox, upload és admin műveletek célzott kliensoldali interakciót igényelnek. Az Astro/TypeScript stack támogatja:
+- a statikus HTML-alapú, kis kliensoldali JavaScript-terhelésű oldalakat;
+- a reszponzív Astro komponenseket;
+- a gallery grid és lightbox fokozatos interaktivizálását;
+- a proofing és admin állapotok célzott kliensoldali kezelését;
+- a jól típusozott, központosított API klienst;
+- a statikus kimenet Caddy mögötti egyszerű kiszolgálását.
 
-A vizuális irány a felhasználó által megadott artisan storefront inspirációhoz igazodik.
+A vizuális irány a `docs/08-ui-ux-terv.md` dokumentumban rögzített, a `szabolcskatona.hu` oldal által inspirált ipari-editoriális rendszerhez igazodik. A világos és sötét témának azonos funkciókészletet kell nyújtania.
 
 ## Kockázatok és limitációk
 
-- túl sok UI library feleslegesen növelheti a frontend komplexitását
+- a kliensoldali interakciókat nem szabad indokolatlanul teljes oldalra kiterjeszteni
+- összetett admin állapotkezelésnél később célzott Astro island vagy UI-integráció válhat szükségessé
 - a design systemet konzisztensen kell használni
 - nagy fotók közvetlen renderelése teljesítményproblémát okozhat
 
 ## Alternatívák
 
-- A1: server-side rendered Thymeleaf  
-  Egyszerűbb backendintegrációt adna, de a tervezett interaktív galériaélményhez kevésbé illeszkedik.
+- A1: React SPA
+  Erős kliensoldali alkalmazásmodellt adna, de a teljes oldalra kiterjedő futtatókörnyezet a statikus és képcentrikus nézetekhez indokolatlan többlet lehet.
+- A2: server-side rendered Thymeleaf
+  Egyszerűbb backendintegrációt adna, de a külön telepíthető, önálló frontend és a tervezett galériaélmény szempontjából kevésbé illeszkedik.
 
 ## Architektúra kapcsolat
 
 ```text
 frontend/
 ├── src/
-├── components/
-├── features/
-├── api/
-└── routes/
+│   ├── components/
+│   ├── layouts/
+│   ├── pages/
+│   ├── api/
+│   ├── lib/
+│   ├── scripts/
+│   └── styles/
+├── astro.config.mjs
+└── package.json
 ```
 
 ## Technikai specifikáció és megjegyzések
@@ -332,13 +343,23 @@ A frontend:
 - nem tartalmaz közvetlen adatbázis-logikát
 - kizárólag backend API-n keresztül ér el üzleti adatot
 - admin és public gallery route-okat különít el
+- a világos/sötét témát design tokenekből állítja elő
+- első látogatáskor a rendszer színsémáját követi, a felhasználói választást pedig lokálisan megőrzi
+- minden lényegi animációnál támogatja a `prefers-reduced-motion` beállítást
+- a koordinátakurzor csak `(pointer: fine)` és `(hover: hover)` környezetben aktiválódik, és kizárólag sikeres inicializálás után váltja le a natív kurzort
+- a dekoratív hullám és scroll-kapcsolt mozgás natív canvas/CSS/TypeScript megoldás; nem vezet be animációs vagy WebGL-függőséget
+- az animációs ciklus rejtett dokumentumnál szünetel, az eseményfigyelők és observerek pedig megszüntethetők
+- az alap UI-készlet Astro `Button`, `Input`, `Card`, `Badge`, `Toast`, `Dialog`, `LoadingState`, `EmptyState` és `ErrorState` komponensekből áll
+- a dialog natív `<dialog>` elemre, billentyűzetes fókuszkezelésre és fókusz-visszaadásra épül; a toast élő régiót használ
 
 ## Tesztelhetőség és verifikáció
 
-- TypeScript typecheck
+- Astro + TypeScript typecheck
 - ESLint
 - production build
-- komponens tesztek
+- API-, téma- és interakciós unit tesztek
+- a dialog, toast és motion capability/koordináta/scroll számítások célzott unit tesztjei
+- világos/sötét és mobil vizuális ellenőrzés
 - később Playwright E2E
 
 ## Nyomonkövethetőség
@@ -1388,7 +1409,7 @@ docs/
 - CockroachDB
 - Java 21
 - Spring Boot
-- React + TypeScript
+- Astro 7 + TypeScript
 - Docker
 - GitHub Actions
 - CI/CD pipeline
@@ -1398,7 +1419,7 @@ docs/
 - Caddy
 - VS Code + Codex
 - verziózott Markdown követelménycsomag
-- frontend unit- és komponenstesztek: Vitest + React Testing Library
+- frontend unit- és interakciós tesztek: Vitest + jsdom
 
 ## Még nyitott
 
@@ -1427,7 +1448,7 @@ A technikai követelmények alapján javasolt sorrend:
 4. docker01 VM
 5. Docker + NFS mount
 6. Spring Boot skeleton
-7. React skeleton
+7. Astro skeleton és világos/sötét témarendszer
 8. Flyway baseline
 9. CockroachDB kapcsolat
 10. Actuator health

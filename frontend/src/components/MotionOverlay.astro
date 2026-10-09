@@ -1,0 +1,26 @@
+<div class="coordinate-overlay" data-coordinate-overlay aria-hidden="true">
+  <span class="coordinate-overlay__axis coordinate-overlay__axis--x"></span>
+  <span class="coordinate-overlay__axis coordinate-overlay__axis--y"></span>
+  <span class="coordinate-overlay__target"></span>
+  <span class="coordinate-overlay__readout" data-coordinate-readout>X 0000 / Y 0000</span>
+</div>
+
+<script>
+  import { mountMotionSystem } from "@/scripts/motion-system"
+
+  type MotionWindow = Window &
+    typeof globalThis & {
+      btphotoMotionCleanup?: () => void
+    }
+
+  const motionWindow = window as MotionWindow
+
+  function initializeMotionSystem() {
+    motionWindow.btphotoMotionCleanup?.()
+    motionWindow.btphotoMotionCleanup = mountMotionSystem()
+  }
+
+  initializeMotionSystem()
+  document.addEventListener("astro:page-load", initializeMotionSystem)
+  document.addEventListener("astro:before-swap", () => motionWindow.btphotoMotionCleanup?.())
+</script>
