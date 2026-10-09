@@ -174,17 +174,6 @@ User Story / GitHub Issue
 → merge
 ```
 
-## Codex
-
-A repository gyökerében lévő [`AGENTS.md`](AGENTS.md) normatív instrukciókat ad a Codex számára.
-
-A Codex:
-- csak a kijelölt story scope-jában dolgozhat;
-- nem vezethet be új infrastruktúrát vagy dependency-t önállóan;
-- nem módosíthat üzleti követelményt hallgatólagosan;
-- köteles tesztelni;
-- köteles jelezni a nem teljesített Acceptance Criteria-t.
-
 ## Következő fázis
 
 1. A `sql01` CockroachDB alkalmazásoldali integrációja.
