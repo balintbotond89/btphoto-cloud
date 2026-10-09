@@ -44,3 +44,9 @@ test-results/
 
 # Local tooling
 .codex/
+
+# Helyi Codex utasítások
+/AGENTS.md
+
+# Helyi VS Code beállítások
+/.vscode/
