@@ -29,7 +29,7 @@ A projekt nem általános fájlmegosztó és nem teljes CRM.
                     +----------+----------+
                     |                     |
                  Frontend              Backend
-                 React/TS            Spring Boot
+                 Astro/TS            Spring Boot
                                           |
                               +-----------+-----------+
                               |                       |
@@ -56,11 +56,11 @@ Virtualizáció:
 - Maven
 
 ### Frontend
-- React
+- Astro 7
 - TypeScript
-- Vite
 - Tailwind CSS
-- shadcn/ui
+- Astro komponensek + minimális natív kliensoldali TypeScript
+- világos/sötét design token rendszer
 
 ### Adat és storage
 - CockroachDB
@@ -104,7 +104,7 @@ btphoto-cloud/
     └── pull_request_template.md
 ```
 
-A Spring Boot backend és a React frontend walking skeleton elkészült. A teljes walking skeleton még nem lezárt; a következő fázis a `sql01` CockroachDB és a valódi Flyway-integráció.
+A Spring Boot backend walking skeleton elkészült. A frontend technológiai baseline az Astro 7 alapú, világos/sötét témát támogató felületre frissült. A teljes walking skeleton még nem lezárt; a következő fázis a `sql01` CockroachDB és a valódi Flyway-integráció.
 
 ## Követelményvezérelt fejlesztés
 
@@ -127,7 +127,7 @@ Admin login
 → JPEG feltöltése
 → fájl NFS-re
 → metaadat CockroachDB-be
-→ kép megjelenítése a React admin felületen
+→ kép megjelenítése az Astro admin felületen
 ```
 
 Kapcsolódó story-k:

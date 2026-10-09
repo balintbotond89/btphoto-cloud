@@ -627,12 +627,13 @@ Tervezett:
 
 Az ügyféloldali galéria elsődlegesen vizuális szolgáltatás, ezért asztali és mobil eszközön egyaránt kényelmesen használhatónak kell lennie.
 
-A pontos vizuális rendszer a frissítendő `08-ui-ux-terv.md` dokumentumban kerül kidolgozásra.
+A felületnek teljes értékű világos és sötét témát kell biztosítania. Első látogatáskor a rendszer színsémája az alapértelmezett, a kézi választás pedig a következő látogatáskor is megmarad. A pontos vizuális rendszert a `08-ui-ux-terv.md` rögzíti.
 
 ## Jelenlegi állapot
 
-- a jelenlegi `08-ui-ux-terv.md` még a korábbi kávés projekthez tartozik
-- a BTPhoto vizuális irány a megadott artisan/Lovable inspiráció alapján már magas szinten definiált
+- a BTPhoto UI/UX terv projekt-specifikus
+- az Astro-alapú walking skeleton világos/sötét témarendszere, ipari-editoriális vizuális iránya és újrafelhasználható alapkomponensei elkészültek
+- a finom mutatós eszközökhöz koordinátás célkereszt, a hero felülethez canvas-alapú hullámréteg, a tartalmi blokkokhoz scroll-kapcsolt felfedés és parallax készült
 
 ## Mérési módszer
 
@@ -648,6 +649,9 @@ Hozzáférhetőségi ellenőrzés:
 - form label
 - kontraszt
 - állapotok ne csak színnel kommunikáljanak
+- világos és sötét témában azonos információs hierarchia
+- `prefers-reduced-motion` mellett lényegi információvesztés nélküli működés
+- a koordinátakurzor érintős vagy durva mutatós eszközön nem aktív, a natív kurzor pedig csak sikeres inicializálás után rejtett
 
 ## Sikerességi kritériumok
 
@@ -657,6 +661,11 @@ Hozzáférhetőségi ellenőrzés:
 - interaktív elemek billentyűzettel elérhetők
 - képek értelmes alt vagy megfelelő dekoratív kezelés mellett jelennek meg
 - űrlaphibák szövegesen is közöltek
+- világos és sötét témában minden funkció elérhető és olvasható
+- első látogatáskor a rendszerpreferencia érvényesül, a kézi témaválasztás megmarad
+- témaváltáskor nincs tartós hibás témafelvillanás
+- mozgáscsökkentés esetén a bevezető, áttűnési, pulzáló és folyamatos animációk leállnak vagy minimálisra rövidülnek
+- mozgáscsökkentés esetén a hullám és a parallax nem animálódik, a koordinátakijelzés pedig simítás nélkül követi a mutatót
 
 ## Sikertelenségi kritériumok
 
@@ -664,19 +673,27 @@ Hozzáférhetőségi ellenőrzés:
 - fontos gomb csak hoverrel használható
 - fókuszjelzés nem látható
 - a vizuális állapot csak színkülönbséggel kommunikál
+- bármelyik téma hiányos vagy a témaváltás információvesztést okoz
+- a rendszer `prefers-reduced-motion` beállítása ellenére folyamatos, nem szükséges mozgás marad
 
 ## Technikai specifikáció és megjegyzések
 
 Tervezett:
-- React
+- Astro 7
+- TypeScript
 - Tailwind CSS
-- shadcn/ui
+- CSS custom property alapú két témás tokenrendszer
+- minimális natív kliensoldali interakció
 - responsive grid
 - accessible dialog/lightbox komponensek
+- szemantikusan elkülönített loading, empty és error állapotkomponensek
+- élő régiós toast és fókusz-visszaadást biztosító natív dialog
 
 ## Tesztelési stratégia
 
 - böngésző manuális responsive teszt
+- világos/sötét témaváltási és megőrzési teszt
+- mozgáscsökkentett megjelenés ellenőrzése
 - Playwright E2E
 - opcionálisan axe accessibility ellenőrzés
 
@@ -1158,7 +1175,7 @@ Abban már konkrét technológiai döntéseket kell rögzíteni, többek közöt
 
 ```text
 TR-TCH-0001  Java 21 + Spring Boot 3
-TR-TCH-0002  React + TypeScript + Vite
+TR-TCH-0002  Astro 7 + TypeScript
 TR-ARC-0001  moduláris rétegzett monolit
 TR-DAT-0001  CockroachDB + PostgreSQL JDBC + JPA
 TR-DAT-0002  Flyway séma migráció
