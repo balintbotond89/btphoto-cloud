@@ -31,7 +31,12 @@ done
 
 mkdir -p "$destination"
 cd "$destination"
-exec jar xf "$archive"
+jar xf "$archive"
+find . -type f \( \
+    -path '*/bin/mvn' -o \
+    -path '*/bin/mvnDebug' -o \
+    -path '*/bin/mvnyjp' \
+\) -exec chmod 0755 {} +
 SCRIPT
 chmod 0755 /usr/local/bin/unzip
 EOF
