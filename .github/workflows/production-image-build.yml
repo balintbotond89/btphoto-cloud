@@ -1,0 +1,182 @@
+name: Production Image Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - Quality CI
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-image-build-${{ github.event.pull_request.number || github.event.workflow_run.id || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deployment-contract-check:
+    name: Production deployment contract check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Production preflight ellenőrzése
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          valid_env="${RUNNER_TEMP}/btphoto-production-valid.env"
+          invalid_env="${RUNNER_TEMP}/btphoto-production-invalid.env"
+          trap 'rm -f "${valid_env}" "${invalid_env}"' EXIT
+
+          write_env() {
+            local target_file=$1
+            local image_tag=$2
+
+            printf '%s\n' \
+              "BTPHOTO_IMAGE_TAG=${image_tag}" \
+              'DB_HOST=db.internal.example' \
+              'DB_PORT=26257' \
+              'DB_NAME=btphoto' \
+              'DB_USERNAME=btphoto_app' \
+              'DB_PASSWORD=ci-dummy-not-production' \
+              > "${target_file}"
+          }
+
+          valid_sha='0123456789abcdef0123456789abcdef01234567'
+          write_env "${valid_env}" "${valid_sha}"
+          sh deploy/validate-production-config.sh "${valid_env}"
+
+          for invalid_tag in \
+            latest \
+            abc \
+            ABCDEF0123456789ABCDEF0123456789ABCDEF01 \
+            0123456789abcdef0123456789abcdef0123456 \
+            0123456789abcdef0123456789abcdef012345678; do
+            write_env "${invalid_env}" "${invalid_tag}"
+            if sh deploy/validate-production-config.sh "${invalid_env}"; then
+              echo "::error::A production preflight elfogadott egy érvénytelen image taget."
+              exit 1
+            fi
+          done
+
+      - name: Gateway Caddyfile natív validálása
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp \
+            --entrypoint caddy \
+            --volume "${GITHUB_WORKSPACE}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f \
+            validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Frontend Caddyfile natív validálása
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp \
+            --entrypoint caddy \
+            --volume "${GITHUB_WORKSPACE}/frontend/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f \
+            validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  pull-request-image-build:
+    name: Pull request image build (${{ matrix.component }})
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+          - component: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Docker Buildx beállítása
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Production image ellenőrző build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          pull: true
+          build-args: |
+            OCI_SOURCE=${{ github.server_url }}/${{ github.repository }}
+            OCI_REVISION=${{ github.event.pull_request.head.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+
+  publish-main-images:
+    name: Publish main image (${{ matrix.component }})
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            image: ghcr.io/balintbotond89/btphoto-backend
+          - component: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+            image: ghcr.io/balintbotond89/btphoto-frontend
+    steps:
+      - name: Quality CI által ellenőrzött commit checkoutja
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Docker Buildx beállítása
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Bejelentkezés a GHCR-be
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Production image build és publikálás
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          pull: true
+          tags: ${{ matrix.image }}:${{ github.event.workflow_run.head_sha }}
+          build-args: |
+            OCI_SOURCE=${{ github.server_url }}/${{ github.repository }}
+            OCI_REVISION=${{ github.event.workflow_run.head_sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
