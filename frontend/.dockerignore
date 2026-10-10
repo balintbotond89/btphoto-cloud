@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+.vite/
+.vitest/
+coverage/
+.git/
+.gitignore
+.env
+.env.*
+.npmrc
+*.log
+*.tmp
+.idea/
+.vscode/

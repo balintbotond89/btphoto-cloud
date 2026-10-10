@@ -1,0 +1,112 @@
+name: btphoto
+
+services:
+  backend:
+    image: ghcr.io/balintbotond89/btphoto-backend:${BTPHOTO_IMAGE_TAG:?BTPHOTO_IMAGE_TAG must be a full 40-character commit SHA}
+    pull_policy: always
+    environment:
+      SPRING_PROFILES_ACTIVE: cockroachdb
+      DB_HOST: ${DB_HOST:?DB_HOST is required}
+      DB_PORT: ${DB_PORT:?DB_PORT is required}
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_SSL_ROOT_CERT: /run/secrets/btphoto/cockroach-ca.crt
+    volumes:
+      - type: bind
+        source: /etc/btphoto/certs/ca.crt
+        target: /run/secrets/btphoto/cockroach-ca.crt
+        read_only: true
+    networks:
+      - application
+    healthcheck:
+      test:
+        - CMD
+        - java
+        - -cp
+        - /app/healthcheck
+        - HealthCheck
+        - http://127.0.0.1:8080/api/health
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    image: ghcr.io/balintbotond89/btphoto-frontend:${BTPHOTO_IMAGE_TAG:?BTPHOTO_IMAGE_TAG must be a full 40-character commit SHA}
+    pull_policy: always
+    environment:
+      XDG_CONFIG_HOME: /tmp/caddy-config
+      XDG_DATA_HOME: /tmp/caddy-data
+    networks:
+      - web
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/health || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    pull_policy: always
+    user: "65534:65534"
+    environment:
+      XDG_CONFIG_HOME: /tmp/caddy-config
+      XDG_DATA_HOME: /tmp/caddy-data
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+    networks:
+      - web
+      - application
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/_gateway/health || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  web:
+    driver: bridge
+    internal: true
+  application:
+    driver: bridge
