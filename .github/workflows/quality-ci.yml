@@ -1,0 +1,85 @@
+name: Quality CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - "feature/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-quality-gate:
+    name: Backend quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Temurin Java 21 beállítása
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            backend/pom.xml
+            backend/.mvn/wrapper/maven-wrapper.properties
+
+      - name: Maven Wrapper futtathatóvá tétele
+        working-directory: backend
+        run: chmod +x ./mvnw
+
+      - name: Backend ellenőrzése
+        working-directory: backend
+        run: ./mvnw clean verify
+
+  frontend-quality-gate:
+    name: Frontend quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 beállítása
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend függőségek telepítése
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Astro és TypeScript ellenőrzése
+        working-directory: frontend
+        run: npm run check
+
+      - name: Frontend lint ellenőrzése
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Frontend tesztek futtatása
+        working-directory: frontend
+        run: npm run test:run
+
+      - name: Frontend production build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Frontend dependency audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
