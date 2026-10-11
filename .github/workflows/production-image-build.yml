@@ -38,7 +38,8 @@ jobs:
           valid_env="${RUNNER_TEMP}/btphoto-production-valid.env"
           invalid_env="${RUNNER_TEMP}/btphoto-production-invalid.env"
           resolved_config="${RUNNER_TEMP}/btphoto-production-compose.json"
-          trap 'rm -f "${valid_env}" "${invalid_env}" "${resolved_config}"' EXIT
+          fixture_root="${RUNNER_TEMP}/btphoto-production-fixtures"
+          trap 'rm -rf "${fixture_root}"; rm -f "${valid_env}" "${invalid_env}" "${resolved_config}"' EXIT
 
           write_env() {
             local target_file=$1
@@ -71,6 +72,7 @@ jobs:
               config = json.load(config_file)
 
           services = config["services"]
+          migrations = services["migrations"]
           backend = services["backend"]
           frontend = services["frontend"]
           caddy = services["caddy"]
@@ -83,6 +85,10 @@ jobs:
                   "A backend cap_drop listájából hiányzik az ALL.")
           require(not backend.get("cap_add"),
                   "A backend nem kaphat hozzáadott capabilityt.")
+          require(migrations.get("cap_drop") == ["ALL"],
+                  "A migrations cap_drop értéke nem pontosan ALL.")
+          require(not migrations.get("cap_add"),
+                  "A migrations nem kaphat hozzáadott capabilityt.")
 
           for name, service in (("frontend", frontend), ("caddy", caddy)):
               require(service.get("cap_drop") == ["ALL"],
@@ -100,6 +106,15 @@ jobs:
                   "A backend nem publikálhat hostportot.")
           require(not frontend.get("ports"),
                   "A frontend nem publikálhat hostportot.")
+          require(not migrations.get("ports"),
+                  "A migrations nem publikálhat hostportot.")
+
+          migration_networks = set((migrations.get("networks") or {}).keys())
+          require(migration_networks == {"application"},
+                  "A migrations csak az application hálózathoz csatlakozhat.")
+          dependency = (backend.get("depends_on") or {}).get("migrations") or {}
+          require(dependency.get("condition") == "service_completed_successfully",
+                  "A backend nem várja meg a migrations sikeres befejezését.")
 
           ports = caddy.get("ports", [])
           require(len(ports) == 1,
@@ -124,6 +139,44 @@ jobs:
             write_env "${invalid_env}" "${invalid_tag}"
             if sh deploy/validate-production-config.sh "${invalid_env}"; then
               echo "::error::A production preflight elfogadott egy érvénytelen image taget."
+              exit 1
+            fi
+          done
+
+          mkdir -p "${fixture_root}/mismatched" "${fixture_root}/missing"
+          for fixture in mismatched missing; do
+            cp deploy/validate-production-config.sh "${fixture_root}/${fixture}/"
+            cp deploy/compose.production.yml "${fixture_root}/${fixture}/"
+          done
+
+          python3 - "${fixture_root}/mismatched/compose.production.yml" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          old = "    image: ghcr.io/balintbotond89/btphoto-migrations:${BTPHOTO_IMAGE_TAG:?BTPHOTO_IMAGE_TAG must be a full 40-character commit SHA}"
+          new = "    image: ghcr.io/balintbotond89/btphoto-migrations:89abcdef0123456789abcdef0123456789abcdef"
+          if text.count(old) != 1:
+              raise SystemExit("A migrations image fixture nem készíthető el.")
+          path.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+
+          python3 - "${fixture_root}/missing/compose.production.yml" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          image_line = "    image: ghcr.io/balintbotond89/btphoto-migrations:${BTPHOTO_IMAGE_TAG:?BTPHOTO_IMAGE_TAG must be a full 40-character commit SHA}\n"
+          if text.count(image_line) != 1:
+              raise SystemExit("A hiányzó migrations image fixture nem készíthető el.")
+          path.write_text(text.replace(image_line, ""), encoding="utf-8")
+          PY
+
+          for fixture in mismatched missing; do
+            if sh "${fixture_root}/${fixture}/validate-production-config.sh" "${valid_env}"; then
+              echo "::error::A production preflight elfogadta a ${fixture} migrations image fixture-t."
               exit 1
             fi
           done
@@ -160,6 +213,9 @@ jobs:
           - component: frontend
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
+          - component: migrations
+            context: ./database
+            dockerfile: ./database/Dockerfile
     steps:
       - name: Repository checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -176,7 +232,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: false
           pull: true
-          load: ${{ matrix.component == 'frontend' }}
+          load: true
           tags: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha }}
           build-args: |
             OCI_SOURCE=${{ github.server_url }}/${{ github.repository }}
@@ -184,6 +240,18 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+
+      - name: OCI revision címke ellenőrzése
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha }}
+          RUNTIME_IMAGE: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          actual_revision=$(docker image inspect \
+            --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+            "${RUNTIME_IMAGE}")
+          [[ "${actual_revision}" == "${EXPECTED_REVISION}" ]]
 
       - name: Caddy runtime capability regresszió ellenőrzése
         if: matrix.component == 'frontend'
@@ -260,6 +328,196 @@ jobs:
             "${GATEWAY_RUNTIME_IMAGE}"
           wait_for_endpoint "${gateway_container}" 'http://127.0.0.1:8080/_gateway/health'
 
+      - name: CockroachDB 26.2.2 migrációs kompatibilitás
+        if: matrix.component == 'migrations'
+        shell: bash
+        env:
+          COCKROACH_IMAGE: cockroachdb/cockroach:v26.2.2@sha256:abb56e6757d4a73a7059af2911b684f3e13930423fe7bef49fe395669eb14562
+          MIGRATIONS_IMAGE: btphoto-migrations:ci-${{ github.event.pull_request.head.sha }}
+        run: |
+          set -Eeuo pipefail
+
+          suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          network="btphoto-crdb-${suffix}"
+          database_container="btphoto-crdb-${suffix}"
+          migration_first="btphoto-migration-first-${suffix}"
+          migration_second="btphoto-migration-second-${suffix}"
+          migration_invalid="btphoto-migration-invalid-${suffix}"
+          fixture_dir="${RUNNER_TEMP}/btphoto-migration-fixture-${suffix}"
+          fixture_file="${fixture_dir}/compose.yml"
+          fixture_project="btphoto-migration-failure-${suffix}"
+
+          cleanup() {
+            if [[ -f "${fixture_file}" ]]; then
+              CI_NETWORK="${network}" docker compose \
+                --project-name "${fixture_project}" \
+                -f "${fixture_file}" \
+                down --remove-orphans >/dev/null 2>&1 || true
+            fi
+            docker rm --force \
+              "${migration_first}" \
+              "${migration_second}" \
+              "${migration_invalid}" \
+              "${database_container}" \
+              >/dev/null 2>&1 || true
+            docker network rm "${network}" >/dev/null 2>&1 || true
+            rm -rf "${fixture_dir}"
+          }
+          trap cleanup EXIT
+
+          docker network create "${network}" >/dev/null
+          docker run --detach \
+            --name "${database_container}" \
+            --network "${network}" \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
+            --tmpfs /cockroach/cockroach-data:rw,nosuid,nodev,size=512m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            "${COCKROACH_IMAGE}" \
+            start-single-node \
+            --insecure \
+            --listen-addr=0.0.0.0:26257 \
+            --http-addr=127.0.0.1:8080 \
+            --store=/cockroach/cockroach-data >/dev/null
+
+          database_ready=0
+          for _ in $(seq 1 60); do
+            if docker exec "${database_container}" \
+              cockroach sql --insecure --host=127.0.0.1:26257 \
+              --execute 'SELECT 1' >/dev/null 2>&1; then
+              database_ready=1
+              break
+            fi
+            sleep 1
+          done
+          [[ "${database_ready}" -eq 1 ]]
+
+          docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=root \
+            --execute 'CREATE DATABASE btphoto; CREATE USER btphoto_app; GRANT CONNECT ON DATABASE btphoto TO btphoto_app' \
+            >/dev/null
+          docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=root --database=btphoto \
+            --execute 'REVOKE CREATE ON SCHEMA public FROM public; GRANT USAGE, CREATE ON SCHEMA public TO btphoto_app' \
+            >/dev/null
+
+          role_membership_count=$(docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=root \
+            --format=csv \
+            --execute "SELECT count(*) FROM system.role_members WHERE member = 'btphoto_app'" \
+            | tail -n 1 | tr -d '\r')
+          [[ "${role_membership_count}" == "0" ]]
+
+          application_identity=$(docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
+            --format=csv \
+            --execute 'SELECT current_user, current_database()' \
+            | tail -n 1 | tr -d '\r')
+          [[ "${application_identity}" == "btphoto_app,btphoto" ]]
+
+          run_migration() {
+            local container_name=$1
+            local jdbc_url=$2
+
+            docker run --name "${container_name}" \
+              --network "${network}" \
+              --read-only \
+              --tmpfs /tmp:rw,noexec,nosuid,nodev,size=32m \
+              --cap-drop ALL \
+              --security-opt no-new-privileges:true \
+              --user 10001:10001 \
+              --env HOME=/tmp \
+              --env "FLYWAY_URL=${jdbc_url}" \
+              --env FLYWAY_USER=btphoto_app \
+              --env FLYWAY_PASSWORD= \
+              --env FLYWAY_LOCATIONS=filesystem:/flyway/sql \
+              --env FLYWAY_CONNECT_RETRIES=0 \
+              "${MIGRATIONS_IMAGE}"
+          }
+
+          jdbc_url="jdbc:postgresql://${database_container}:26257/btphoto?sslmode=disable"
+          run_migration "${migration_first}" "${jdbc_url}"
+          run_migration "${migration_second}" "${jdbc_url}"
+
+          history_count=$(docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
+            --format=csv \
+            --execute "SELECT count(*) FROM public.flyway_schema_history WHERE version = '1' AND success" \
+            | tail -n 1 | tr -d '\r')
+          [[ "${history_count}" == "1" ]]
+
+          public_table_count=$(docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
+            --format=csv \
+            --execute "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'" \
+            | tail -n 1 | tr -d '\r')
+          [[ "${public_table_count}" == "1" ]]
+
+          if run_migration "${migration_invalid}" \
+            'jdbc:postgresql://missing-cockroach.invalid:26257/btphoto?sslmode=disable'; then
+            echo '::error::A migrations image hibás kapcsolati adatokkal is sikeres lett.'
+            exit 1
+          fi
+
+          mkdir -p "${fixture_dir}"
+          cat >"${fixture_file}" <<'YAML'
+          services:
+            migrations:
+              image: ${MIGRATIONS_IMAGE}
+              user: "10001:10001"
+              environment:
+                HOME: /tmp
+                FLYWAY_URL: jdbc:postgresql://missing-cockroach.invalid:26257/btphoto?sslmode=disable
+                FLYWAY_USER: btphoto_app
+                FLYWAY_PASSWORD: ""
+                FLYWAY_LOCATIONS: filesystem:/flyway/sql
+                FLYWAY_CONNECT_RETRIES: "0"
+              networks:
+                - integration
+              read_only: true
+              tmpfs:
+                - /tmp:rw,noexec,nosuid,nodev,size=32m
+              cap_drop:
+                - ALL
+              security_opt:
+                - no-new-privileges:true
+            backend-probe:
+              image: ${MIGRATIONS_IMAGE}
+              entrypoint:
+                - /bin/sh
+                - -c
+              command:
+                - printf backend-started
+              depends_on:
+                migrations:
+                  condition: service_completed_successfully
+              networks:
+                - integration
+          networks:
+            integration:
+              external: true
+              name: ${CI_NETWORK}
+          YAML
+
+          export MIGRATIONS_IMAGE CI_NETWORK="${network}"
+          if docker compose \
+            --project-name "${fixture_project}" \
+            -f "${fixture_file}" \
+            up --abort-on-container-exit; then
+            echo '::error::A hibás migrációs fixture váratlanul sikeres lett.'
+            exit 1
+          fi
+
+          backend_probe_id=$(docker compose \
+            --project-name "${fixture_project}" \
+            -f "${fixture_file}" \
+            ps --all -q backend-probe || true)
+          if [[ -n "${backend_probe_id}" ]]; then
+            backend_probe_state=$(docker inspect --format '{{.State.Status}}' "${backend_probe_id}")
+            [[ "${backend_probe_state}" == "created" ]]
+          fi
+
   publish-main-images:
     name: Publish main image (${{ matrix.component }})
     if: >-
@@ -284,6 +542,10 @@ jobs:
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
             image: ghcr.io/balintbotond89/btphoto-frontend
+          - component: migrations
+            context: ./database
+            dockerfile: ./database/Dockerfile
+            image: ghcr.io/balintbotond89/btphoto-migrations
     steps:
       - name: Quality CI által ellenőrzött commit checkoutja
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -49,10 +49,13 @@ fi
 
 backend_prefix='ghcr.io/balintbotond89/btphoto-backend:'
 frontend_prefix='ghcr.io/balintbotond89/btphoto-frontend:'
+migrations_prefix='ghcr.io/balintbotond89/btphoto-migrations:'
 backend_image=''
 frontend_image=''
+migrations_image=''
 backend_count=0
 frontend_count=0
+migrations_count=0
 
 for image in $resolved_images; do
     case "$image" in
@@ -64,15 +67,20 @@ for image in $resolved_images; do
             frontend_image=$image
             frontend_count=$((frontend_count + 1))
             ;;
+        "$migrations_prefix"*)
+            migrations_image=$image
+            migrations_count=$((migrations_count + 1))
+            ;;
     esac
 done
 
-if [ "$backend_count" -ne 1 ] || [ "$frontend_count" -ne 1 ]; then
-    fail "a backend es frontend feloldott image-neve nem egyertelmu"
+if [ "$backend_count" -ne 1 ] || [ "$frontend_count" -ne 1 ] || [ "$migrations_count" -ne 1 ]; then
+    fail "a backend, frontend es migrations feloldott image-neve nem egyertelmu"
 fi
 
 backend_tag=${backend_image#"$backend_prefix"}
 frontend_tag=${frontend_image#"$frontend_prefix"}
+migrations_tag=${migrations_image#"$migrations_prefix"}
 
 validate_sha() {
     component=$1
@@ -91,9 +99,97 @@ validate_sha() {
 
 validate_sha backend "$backend_tag"
 validate_sha frontend "$frontend_tag"
+validate_sha migrations "$migrations_tag"
 
-if [ "$backend_tag" != "$frontend_tag" ]; then
-    fail "a backend es frontend image tagje nem azonos commit SHA"
+if [ "$backend_tag" != "$frontend_tag" ] || [ "$backend_tag" != "$migrations_tag" ]; then
+    fail "a backend, frontend es migrations image tagje nem azonos commit SHA"
 fi
 
-echo "A production konfiguracio ervenyes; az alkalmazas image-ek kozos commit SHA-ja: $backend_tag"
+resolved_config=$(mktemp)
+chmod 0600 "$resolved_config"
+trap 'rm -f "$resolved_config"' EXIT HUP INT TERM
+
+if ! docker compose \
+    --env-file "$env_file" \
+    -f "$compose_file" \
+    config --format json >"$resolved_config"; then
+    fail "a feloldott Compose-konfiguracio nem kerdezheto le"
+fi
+
+if ! python3 - "$resolved_config" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as config_file:
+    config = json.load(config_file)
+
+services = config.get("services", {})
+backend = services.get("backend")
+migrations = services.get("migrations")
+
+
+def require(condition, message):
+    if not condition:
+        raise SystemExit(message)
+
+
+require(isinstance(backend, dict), "a backend szolgaltatas hianyzik")
+require(isinstance(migrations, dict), "a migrations szolgaltatas hianyzik")
+
+depends_on = backend.get("depends_on") or {}
+migration_dependency = depends_on.get("migrations") or {}
+require(
+    migration_dependency.get("condition") == "service_completed_successfully",
+    "a backend nem varja meg a migrations sikeres befejezeset",
+)
+
+require(migrations.get("user") == "10001:10001", "a migrations user nem a rogzitett nem root user")
+require(migrations.get("read_only") is True, "a migrations root fajlrendszere nem read-only")
+require(migrations.get("restart") in ("no", "none"), "a migrations restart policy nem pontosan tiltott")
+require(migrations.get("cap_drop") == ["ALL"], "a migrations cap_drop nem pontosan ALL")
+require(not migrations.get("cap_add"), "a migrations nem kaphat hozzaadott capabilityt")
+require(
+    "no-new-privileges:true" in (migrations.get("security_opt") or []),
+    "a migrations no-new-privileges vedelme hianyzik",
+)
+require(not migrations.get("ports"), "a migrations nem publikalhat hostportot")
+
+networks = migrations.get("networks") or {}
+network_names = set(networks if isinstance(networks, list) else networks.keys())
+require(network_names == {"application"}, "a migrations csak az application halozathoz csatlakozhat")
+
+tmpfs = migrations.get("tmpfs") or []
+require(len(tmpfs) == 1, "a migrations pontosan egy tmpfs mountot kaphat")
+tmpfs_entry = str(tmpfs[0])
+require(tmpfs_entry.startswith("/tmp:"), "a migrations tmpfs celutvonala nem /tmp")
+tmpfs_options = set(tmpfs_entry.split(":", 1)[1].split(","))
+require(
+    {"rw", "noexec", "nosuid", "nodev", "size=32m"}.issubset(tmpfs_options),
+    "a migrations tmpfs kotelezo opcioi hianyoznak",
+)
+
+volumes = migrations.get("volumes") or []
+require(len(volumes) == 1, "a migrations mountkeszlete nem pontosan egy CA bind mount")
+ca_mount = volumes[0]
+require(ca_mount.get("type") == "bind", "a migrations CA mountja nem bind")
+require(ca_mount.get("source") == "/etc/btphoto/certs/ca.crt", "a migrations CA forrasa elter")
+require(
+    ca_mount.get("target") == "/run/secrets/btphoto/cockroach-ca.crt",
+    "a migrations CA celutvonala elter",
+)
+require(ca_mount.get("read_only") is True, "a migrations CA mountja nem read-only")
+
+environment = migrations.get("environment") or {}
+url = str(environment.get("FLYWAY_URL", ""))
+require("sslmode=verify-full" in url, "a migrations TLS modja nem verify-full")
+require(
+    "sslrootcert=/run/secrets/btphoto/cockroach-ca.crt" in url,
+    "a migrations CA utvonala nem rogzitett",
+)
+require(environment.get("FLYWAY_LOCATIONS") == "filesystem:/flyway/sql", "a migrations location elter")
+PY
+then
+    fail "a production Compose biztonsagi szerzodese ervenytelen"
+fi
+
+echo "A production konfiguracio ervenyes; a harom sajat image kozos commit SHA-ja: $backend_tag"
