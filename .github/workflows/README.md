@@ -31,10 +31,10 @@ Pull request esetén:
 - felépíti a backend és frontend production image-et;
 - a PR-ben épített frontend image-et ideiglenes lokális CI-taggel betölti, de
   nem publikálja;
-- izolált, külső hálózat és hostport nélküli konténerekben reprodukálja a
-  capability nélküli `operation not permitted` hibát, majd pozitív runtime
-  teszttel ellenőrzi a frontend `/health` és a gateway `/_gateway/health`
-  végpontját a célzott `NET_BIND_SERVICE` capability mellett;
+- a minimális capability-szerződés strukturális ellenőrzése után izolált,
+  külső hálózat és hostport nélküli pozitív runtime- és health-teszttel
+  ellenőrzi a frontend `/health` és a gateway `/_gateway/health` végpontját a
+  célzott `NET_BIND_SERVICE` capability mellett;
 - nem jelentkezik be a GHCR-be;
 - nem pushol image-et;
 - csak `contents: read` jogosultságot kap;

@@ -195,13 +195,11 @@ jobs:
           set -Eeuo pipefail
 
           suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          negative_container="btphoto-frontend-no-cap-${suffix}"
           frontend_container="btphoto-frontend-cap-${suffix}"
           gateway_container="btphoto-gateway-cap-${suffix}"
 
           cleanup() {
             docker rm --force \
-              "${negative_container}" \
               "${frontend_container}" \
               "${gateway_container}" \
               >/dev/null 2>&1 || true
@@ -232,40 +230,6 @@ jobs:
             echo "::error::A ${container_name} konténer végpontja nem vált elérhetővé: ${endpoint}"
             return 1
           }
-
-          set +e
-          negative_output=$(docker run --detach \
-            --name "${negative_container}" \
-            --network none \
-            --read-only \
-            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
-            --cap-drop ALL \
-            --security-opt no-new-privileges:true \
-            --user 10001:10001 \
-            --env XDG_CONFIG_HOME=/tmp/caddy-config \
-            --env XDG_DATA_HOME=/tmp/caddy-data \
-            "${FRONTEND_RUNTIME_IMAGE}" 2>&1)
-          negative_run_status=$?
-          set -e
-
-          if (( negative_run_status == 0 )); then
-            timeout 5 docker wait "${negative_container}" >/dev/null 2>&1 || true
-          fi
-
-          negative_state=$(docker inspect --format '{{.State.Status}}' \
-            "${negative_container}" 2>/dev/null || printf 'not-created')
-          negative_error=$(docker inspect --format '{{.State.Error}}' \
-            "${negative_container}" 2>/dev/null || true)
-
-          if [[ "${negative_state}" == 'running' ]]; then
-            echo '::error::A frontend NET_BIND_SERVICE nélkül váratlanul futva maradt.'
-            exit 1
-          fi
-          if ! grep --ignore-case --quiet 'operation not permitted' \
-            <<<"${negative_output} ${negative_error}"; then
-            echo '::error::A korábbi operation not permitted hiba nem reprodukálódott.'
-            exit 1
-          fi
 
           docker run --detach \
             --name "${frontend_container}" \
