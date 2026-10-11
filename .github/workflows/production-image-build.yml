@@ -412,12 +412,33 @@ jobs:
             --execute 'REVOKE CREATE ON SCHEMA public FROM public; GRANT USAGE, CREATE ON SCHEMA public TO btphoto_app' \
             >/dev/null
 
-          role_membership_count=$(docker exec "${database_container}" \
+          if ! docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=root \
             --format=csv \
-            --execute "SELECT count(*) FROM system.role_members WHERE member = 'btphoto_app'" \
-            | tail -n 1 | tr -d '\r')
-          [[ "${role_membership_count}" == "0" ]]
+            --execute 'SHOW ROLES' \
+            | python3 -c '
+          import csv
+          import sys
+
+          reader = csv.DictReader(sys.stdin)
+          required_columns = {"username", "member_of"}
+          if reader.fieldnames is None or not required_columns.issubset(reader.fieldnames):
+              print("::error::A SHOW ROLES CSV-kimenetéből hiányzik a username vagy member_of oszlop.", file=sys.stderr)
+              raise SystemExit(1)
+
+          matches = [row for row in reader if row.get("username") == "btphoto_app"]
+          if len(matches) != 1:
+              print(f"::error::A SHOW ROLES kimenetében pontosan egy btphoto_app sor helyett {len(matches)} található.", file=sys.stderr)
+              raise SystemExit(1)
+
+          member_of = (matches[0].get("member_of") or "").strip()
+          if member_of != "{}":
+              print("::error::A btphoto_app váratlan szerepkör-tagsággal rendelkezik; a member_of érték nem üres.", file=sys.stderr)
+              raise SystemExit(1)
+          '; then
+            echo '::error::A btphoto_app SHOW ROLES alapú legkisebb jogosultság-ellenőrzése sikertelen.'
+            exit 1
+          fi
 
           application_identity=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
