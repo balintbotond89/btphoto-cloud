@@ -2,7 +2,7 @@
 
 Saját infrastruktúrán futó, fotós munkafolyamatokra specializált privát felhő és ügyfélgaléria.
 
-**Fejlesztési baseline:** `BTPC-BL-2026-09-13-v0.1`
+**Fejlesztési baseline:** `BTPC-BL-2026-10-11-v0.3`
 
 ## Projektcél
 
@@ -33,13 +33,16 @@ A projekt nem általános fájlmegosztó és nem teljes CRM.
                                           |
                               +-----------+-----------+
                               |                       |
-                           sql01                   nas01
-                        CockroachDB              NFSv4 media
+                            sql01                   nas01
+                         CockroachDB              NFSv4 media
+                              ^
+                              |
+                    egyszer lefutó migrations
 ```
 
 Virtualizáció:
 - `pve01.btphoto.hu` – Proxmox VE
-- `docker01` – Docker/Caddy/frontend/backend
+- `docker01` – Docker/Caddy/frontend/backend/migrations
 - `sql01` – CockroachDB
 - `nas01` – Debian 13 MicroServer/NFSv4
 
@@ -51,9 +54,14 @@ Virtualizáció:
 - Spring Web
 - Spring Security
 - Spring Data JPA
-- Flyway
 - Actuator
 - Maven
+
+### Adatbázis-migráció
+- külön Flyway 12.6.2 migrations image
+- egyetlen hiteles SQL-forrás a `database/migrations/` könyvtárban
+- idempotens Compose futás a backend indulása előtt
+- production TLS `verify-full`; a backend csak Hibernate schema validationt végez
 
 ### Frontend
 - Astro 7
@@ -89,6 +97,8 @@ btphoto-cloud/
 ├── README.md
 ├── backend/
 │   └── src/
+├── database/
+│   └── migrations/
 ├── frontend/
 │   └── src/
 ├── deploy/
@@ -96,7 +106,7 @@ btphoto-cloud/
 │   ├── 01-uzleti-kovetelmenyek.md
 │   ├── ...
 │   ├── 09-rendszerterv-es-szolgaltatasarchitektura.md
-│   └── BASELINE-v0.1.md
+│   └── BASELINE-v0.3.md
 ├── scripts/
 └── .github/
     ├── workflows/
@@ -104,7 +114,12 @@ btphoto-cloud/
     └── pull_request_template.md
 ```
 
-A Spring Boot backend walking skeleton elkészült. A frontend technológiai baseline az Astro 7 alapú, világos/sötét témát támogató felületre frissült. A teljes walking skeleton még nem lezárt; a következő fázis a `sql01` CockroachDB és a valódi Flyway-integráció.
+A Spring Boot backend és az Astro 7 frontend walking skeleton elkészült. A
+CockroachDB 26-kompatibilis Flyway migráció külön, egyszer lefutó image-be került;
+a backend már nem módosít sémát. A repository-oldali production Compose,
+image-build és kontrollált rollback szerződés elkészült, de a teljes walking
+skeleton csak a PR-workflow és a kontrollált `docker01` deployment sikeres élő
+ellenőrzése után tekinthető lezártnak.
 
 ## Követelményvezérelt fejlesztés
 
@@ -187,13 +202,14 @@ A Codex:
 
 ## Következő fázis
 
-1. A `sql01` CockroachDB alkalmazásoldali integrációja.
-2. A teljes Flyway migrációs lánc ellenőrzése valódi, eldobható CockroachDB tesztadatbázison.
+1. A három production image és a CockroachDB 26.2.2 migrációs integrációs teszt PR-workflow ellenőrzése.
+2. A kontrollált `docker01` deployment production `verify-full` TLS smoke tesztje.
 3. A teljes frontend → backend → CockroachDB walking skeleton lezárása.
-4. `docker01` Docker + NFS mount integráció.
-5. CI quality gate.
-6. Első vertikális feature.
+4. NFS media integráció.
+5. Első vertikális feature.
 
 ## Dokumentációs státusz
 
-A `docs/01`–`docs/09` fájlok a `BTPC-BL-2026-09-13-v0.1` fejlesztési baseline részét képezik. A nem blokkoló nyitott döntések a `docs/BASELINE-v0.1.md` fájlban találhatók.
+A `docs/03`–`docs/09` aktuális technikai állapotát a
+`BTPC-BL-2026-10-11-v0.3` baseline rögzíti. A v0.1 és v0.2 fájlok változatlan
+történeti pillanatképek.

@@ -9,7 +9,6 @@ Technológiai alap:
 - Spring Web
 - Spring Boot Actuator
 - Spring Data JPA
-- Flyway
 - PostgreSQL JDBC driver
 - Jakarta Bean Validation
 - JUnit 5 és MockMvc
@@ -84,6 +83,12 @@ beállítása után:
 $env:SPRING_PROFILES_ACTIVE = "cockroachdb"
 .\mvnw.cmd spring-boot:run
 ```
+
+A production sémamigráció nem a backend indulásakor fut. A verziózott SQL
+egyetlen hiteles forrása a `../database/migrations/` könyvtár, amelyből külön,
+egyszer lefutó Flyway image készül. A backend csak a migráció sikeres
+befejezése után indul, és a `cockroachdb` profilban a Hibernate
+`ddl-auto: validate` beállítással kizárólag ellenőrzi a meglévő sémát.
 
 Normatív szabályok:
 - `../AGENTS.md`
