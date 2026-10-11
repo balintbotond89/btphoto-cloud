@@ -374,12 +374,15 @@ jobs:
             --tmpfs /cockroach/cockroach-data:rw,nosuid,nodev,size=512m \
             --cap-drop ALL \
             --security-opt no-new-privileges:true \
+            --entrypoint /cockroach/cockroach \
             "${COCKROACH_IMAGE}" \
             start-single-node \
             --insecure \
             --listen-addr=0.0.0.0:26257 \
+            --advertise-addr="${database_container}:26257" \
             --http-addr=127.0.0.1:8080 \
-            --store=/cockroach/cockroach-data >/dev/null
+            --store=/cockroach/cockroach-data \
+            --logtostderr=INFO >/dev/null
 
           database_ready=0
           for _ in $(seq 1 60); do
@@ -391,7 +394,14 @@ jobs:
             fi
             sleep 1
           done
-          [[ "${database_ready}" -eq 1 ]]
+          if [[ "${database_ready}" -ne 1 ]]; then
+            docker inspect \
+              --format 'status={{.State.Status}} running={{.State.Running}} exit_code={{.State.ExitCode}} oom_killed={{.State.OOMKilled}} error={{json .State.Error}} started_at={{.State.StartedAt}} finished_at={{.State.FinishedAt}}' \
+              "${database_container}" || true
+            docker logs "${database_container}" 2>&1 || true
+            echo '::error::A CockroachDB 26.2.2 CI-fixture nem vált elérhetővé a readiness időkorláton belül.'
+            exit 1
+          fi
 
           docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=root \
