@@ -36,7 +36,7 @@ A dokumentum a korábbi sikeres projekt technikai követelményeinek szerkezeté
 | `TR-SEC-0001` | Spring Security alapú backend védelem | elfogadott | kritikus |
 | `TR-DEV-0001` | JUnit 5 + Mockito + MockMvc tesztstack | elfogadott | kritikus |
 | `TR-DEV-0002` | JaCoCo + Checkstyle + SpotBugs quality gate | elfogadott | magas |
-| `TR-DEV-0003` | CockroachDB integrációs tesztkörnyezet | tervezet | magas |
+| `TR-DEV-0003` | CockroachDB integrációs tesztkörnyezet | elfogadott | magas |
 | `TR-DEP-0001` | Docker + Docker Compose production futtatás | elfogadott | kritikus |
 | `TR-DEP-0002` | GitHub Actions + GHCR CI/CD | elfogadott | kritikus |
 | `TR-OPS-0001` | Caddy reverse proxy és HTTPS belépési pont | elfogadott | magas |
@@ -531,9 +531,11 @@ CockroachDB
 - külön alkalmazás adatbázis
 - külön alkalmazás user
 - production secret környezeti változóból
-- TLS használata production állapotban cél
+- production kapcsolatnál kötelező `sslmode=verify-full`
+- a CA runtime read-only mountból érkezik
+- az alkalmazásfelhasználó nem kap belső `system` vagy `crdb_internal` hozzáférést
 
-A pontos JDBC URL és TLS-konfiguráció a `sql01` telepítésekor dokumentálandó.
+A hostnévnek vagy IP-címnek egyeznie kell a szervertanúsítvány SAN-bejegyzésével.
 
 ## Tesztelhetőség és verifikáció
 
@@ -561,6 +563,9 @@ A pontos JDBC URL és TLS-konfiguráció a `sql01` telepítésekor dokumentálan
 ## Részletes leírás
 
 Az adatbázisséma minden tartós változása verziózott Flyway migrációban készüljön.
+Productionben a migráció a backendtől különálló, egyszer lefutó Flyway 12.6.2
+image-ből történik. A backend nem tartalmaz Flyway runtime dependency-t, nem
+módosít sémát, és Hibernate `ddl-auto: validate` módban csak ellenőrzi azt.
 
 ## Indoklás és támogatott üzleti cél
 
@@ -581,9 +586,9 @@ Az adatbázisséma minden tartós változása verziózott Flyway migrációban k
 
 ## Architektúra kapcsolat
 
-Tervezett könyvtár:
+Egyetlen hiteles migrációs könyvtár:
 ```text
-backend/src/main/resources/db/migration/
+database/migrations/
 ```
 
 ## Technikai specifikáció és megjegyzések
@@ -595,11 +600,17 @@ V2__create_gallery.sql
 ...
 ```
 
-Productionben a migráció viselkedését kontrolláltan kell kezelni.
+Az image a hivatalos `redgate/flyway:12.6.2` pontos digestjére épülő, minimális
+nem root leszármazott. Nem tartalmaz credentialt vagy CA-fájlt. A Compose
+`migrations` szolgáltatása minden alkalmazásindítás előtt idempotensen
+lefuthat; csak sikeres, nulla exit kód után teljesülhet a backend
+`service_completed_successfully` indítási előfeltétele.
 
 ## Tesztelhetőség és verifikáció
 
 - tiszta CockroachDB példányon minden migráció végigfut
+- a teljes migrációs lánc második futása sikeres és nem duplikál history sort
+- hibás kapcsolati adatokkal a migráció bukik, és a backend nem indul
 - új migráció CI-ben ellenőrződik
 - migration checksum eltérés hibát okoz
 
@@ -872,7 +883,7 @@ mvn clean verify
 
 - TR azonosító: `TR-DEV-0003`
 - TR neve: CockroachDB integrációs tesztkörnyezet
-- Státusz: tervezet
+- Státusz: elfogadott
 - Prioritás: magas
 
 ## Részletes leírás
@@ -897,15 +908,16 @@ Csökkenti annak kockázatát, hogy:
 
 ## Architektúra kapcsolat
 
-Lehetséges megoldás:
-- CI service container
-- vagy Testcontainers-alapú CockroachDB
-
-A pontos mechanizmus még nem végleges.
+Elfogadott megoldás: GitHub-hosted runneren, digesttel rögzített CockroachDB
+26.2.2 konténer és a tényleges migrations image fut. Az insecure mód kizárólag
+eldobható CI-fixture; nem helyettesíti a production `verify-full` TLS smoke
+tesztet. H2 és production `sql01` nem használható ehhez az ellenőrzéshez.
 
 ## Tesztelhetőség és verifikáció
 
-- Flyway baseline fut
+- Flyway baseline tiszta adatbázison és idempotens második futásban is lefut
+- a `flyway_schema_history` pontosan egy sikeres V1 sort tartalmaz
+- hibás kapcsolat blokkolja a backend indítási előfeltételét
 - JPA repository tesztek futnak
 - constraint tesztek futnak
 
@@ -930,9 +942,12 @@ Az alkalmazás szolgáltatásai a `docker01` VM-en Docker konténerekben fussana
 Kezdeti Compose stack:
 
 ```text
+migrations (egyszer lefutó)
+    ↓ service_completed_successfully
+backend
+    ↓ healthy
 caddy
 frontend
-backend
 ```
 
 A CockroachDB nem ebben a Compose stackben fut productionben, hanem külön `sql01` VM-en.
@@ -960,7 +975,8 @@ A CockroachDB nem ebben a Compose stackben fut productionben, hanem külön `sql
 docker01
 ├── caddy
 ├── frontend
-└── backend
+├── backend
+└── migrations (exited 0)
 ```
 
 ## Technikai specifikáció és megjegyzések
@@ -968,8 +984,10 @@ docker01
 - `compose.production.yml`
 - `.env.production` nem kerül Gitbe
 - image-ek registryből
+- backend, frontend és migrations image azonos teljes Git SHA taggel
 - healthcheck
 - restart policy kontrolláltan
+- a migrációs szolgáltatás nem indul újra, nem publikál portot, és csak az application hálózathoz csatlakozik
 
 ## Tesztelhetőség és verifikáció
 
@@ -1054,7 +1072,9 @@ Docker Compose deploy
 - branch protection
 - GitHub Environment használata javasolt productionhöz
 - deploy secret GitHub Secretből
-- image tag legalább commit SHA-val
+- backend, frontend és migrations image kizárólag ugyanazzal a teljes, 40 karakteres commit SHA-val
+- PR-ben CockroachDB 26.2.2 kompatibilitási, idempotencia- és hibás kapcsolat teszt
+- minden saját image OCI `revision` címkéjének ellenőrzése
 
 ## Tesztelhetőség és verifikáció
 
@@ -1062,6 +1082,7 @@ Docker Compose deploy
 - image build only after green gate
 - deploy health check
 - commit → image traceability
+- hibás migráció → backend indítási előfeltétel nem teljesül
 
 ## Nyomonkövethetőség
 
@@ -1415,7 +1436,9 @@ docs/
 - CI/CD pipeline
 - NFSv4 média storage
 - Spring Data JPA
-- Flyway
+- külön Flyway 12.6.2 migrations image, digesttel rögzített hivatalos base image-ből
+- production CockroachDB TLS `verify-full`
+- CockroachDB 26.2.2 CI service container fixture
 - Caddy
 - VS Code + Codex
 - verziózott Markdown követelménycsomag
@@ -1425,14 +1448,12 @@ docs/
 
 - admin auth: session vagy JWT
 - végleges `vmbr2` IP-címzés
-- CockroachDB pontos TLS/certificate modell
-- CockroachDB integrációs teszt: Testcontainers vagy CI service container
 - Playwright bevezetési pontja
 - média preview generáló könyvtár/technológia
 - média kiszolgálás végső optimalizálása
 - pontos production alkalmazás-domain
 - offsite backup cél
-- végleges Docker image base image-ek
+- a backend és frontend base image-ek későbbi frissítési rendje
 - letöltésengedélyezés: lezárva az MVP-re (`US-0013`, média-szintű, default tiltott)
 
 ---
@@ -1449,15 +1470,15 @@ A technikai követelmények alapján javasolt sorrend:
 5. Docker + NFS mount
 6. Spring Boot skeleton
 7. Astro skeleton és világos/sötét témarendszer
-8. Flyway baseline
-9. CockroachDB kapcsolat
+8. külön Flyway migrations image és baseline
+9. CockroachDB 26.2.2 kompatibilitási ellenőrzés
 10. Actuator health
 11. quality-ci.yml
 12. első end-to-end feature
 13. Caddy
 14. privát share/proofing
-15. GHCR image build
-16. self-hosted deploy
+15. három saját GHCR image közös teljes SHA taggel
+16. kontrollált deployment és egyszer végrehajtható rollback
 17. backup/restore teszt
 ```
 

@@ -19,8 +19,10 @@ két elkülönített működési módja van.
 Pull request esetén:
 
 - dummy, nem production konfigurációval lefuttatja a production preflightot;
-- pozitív esetben ellenőrzi a közös, teljes commit-SHA taget, negatív esetekben
+- pozitív esetben ellenőrzi a backend, frontend és migrations közös, teljes
+  commit-SHA tagjét, negatív esetekben
   elutasítja a `latest`, rövid, nagybetűs, valamint 39 és 41 karakteres tageket;
+- elutasítja a hiányzó migrations image-et és a három komponenstől eltérő taget;
 - a digesttel rögzített hivatalos Caddy image `validate` parancsával ellenőrzi a
   gateway és a frontend Caddyfile-t;
 - strukturáltan ellenőrzi, hogy a backend nem kap hozzáadott capabilityt, a
@@ -28,17 +30,25 @@ Pull request esetén:
   `NET_BIND_SERVICE` capabilityt kapja vissza;
 - ellenőrzi a read-only root fájlrendszert, a `no-new-privileges` védelmet és a
   kizárólagos `127.0.0.1:8080` gateway portpublikálást;
-- felépíti a backend és frontend production image-et;
+- felépíti a backend, frontend és migrations production image-et;
+- mindhárom saját image OCI revision címkéjét ellenőrzi;
 - a PR-ben épített frontend image-et ideiglenes lokális CI-taggel betölti, de
   nem publikálja;
 - a minimális capability-szerződés strukturális ellenőrzése után izolált,
   külső hálózat és hostport nélküli pozitív runtime- és health-teszttel
   ellenőrzi a frontend `/health` és a gateway `/_gateway/health` végpontját a
   célzott `NET_BIND_SERVICE` capability mellett;
+- digesttel rögzített CockroachDB 26.2.2 CI-fixture-ben kétszer lefuttatja a
+  tényleges migrations image-et, ellenőrzi az egyetlen sikeres V1 history sort,
+  majd hibás kapcsolatnál igazolja a backend indítási kapujának blokkolását;
 - nem jelentkezik be a GHCR-be;
 - nem pushol image-et;
 - csak `contents: read` jogosultságot kap;
 - nem használ repository- vagy environment-secretet.
+
+A CockroachDB fixture `--insecure` módja kizárólag eldobható CI-kompatibilitási
+teszt. Nem használja a production `sql01` adatbázist, és nem helyettesíti a
+production `sslmode=verify-full` TLS smoke tesztet.
 
 Sikeres main Quality CI után:
 
@@ -47,7 +57,8 @@ Sikeres main Quality CI után:
 - a workflow az upstream futás pontos `head_sha` commitját checkoutolja;
 - csak a publikáló job kap `packages: write` jogosultságot;
 - a GHCR-login a beépített `GITHUB_TOKEN` használatával történik;
-- a backend és frontend image kizárólag teljes commit SHA taget kap;
+- a backend, frontend és migrations image kizárólag ugyanazt a teljes commit
+  SHA taget kapja;
 - `latest` tag nem készül;
 - az image OCI `source` és `revision` labelt tartalmaz.
 
@@ -56,6 +67,7 @@ Publikált image-nevek:
 ```text
 ghcr.io/balintbotond89/btphoto-backend:<teljes-commit-SHA>
 ghcr.io/balintbotond89/btphoto-frontend:<teljes-commit-SHA>
+ghcr.io/balintbotond89/btphoto-migrations:<teljes-commit-SHA>
 ```
 
 A workflow nem használ `pull_request_target` eseményt, nem tölt le vagy hajt
@@ -70,7 +82,5 @@ ellenőrzött stabil release-verziót.
 
 A következő, külön scope-ba tartozó lépések:
 
-- `cockroach-integration-check.yml` valódi, eldobható CockroachDB
-  tesztkörnyezettel;
 - `production-deploy.yml` jóváhagyott production environmenttel, kontrollált
   runnerrel, health/smoke ellenőrzéssel és rollback-eljárással.

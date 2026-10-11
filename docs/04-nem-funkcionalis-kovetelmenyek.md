@@ -250,7 +250,8 @@ A minimum relációs szabályok:
 
 ## Jelenlegi állapot
 
-- CockroachDB még nincs telepítve a végleges `sql01` VM-re
+- a `sql01` VM-en CockroachDB 26.2.2 és a `btphoto` alkalmazás-adatbázis rendelkezésre áll
+- a verziózott séma külön, egyszer lefutó Flyway 12.6.2 migrációs komponensből kezelhető
 - végleges JPA entity modell még nincs implementálva
 
 ## Mérési módszer
@@ -266,6 +267,8 @@ A minimum relációs szabályok:
 - árva selection item nem hozható létre
 - kötelező relációk megsértése mentési hibát okoz
 - Flyway migráció tiszta tesztadatbázison végigfut
+- a migráció második, változatlan futása sikeres és nem hoz létre duplikált verziót
+- sikertelen migráció esetén a backend nem indul el
 - a sémaváltozások reprodukálhatók
 
 ## Sikertelenségi kritériumok
@@ -279,7 +282,8 @@ A minimum relációs szabályok:
 Tervezett:
 - CockroachDB
 - Spring Data JPA
-- Flyway
+- külön Flyway migrációs image és egyszer lefutó Compose-szolgáltatás
+- a backend csak `ddl-auto: validate` módban ellenőrzi, de nem módosítja a sémát
 - foreign key és unique constraint-ek ott, ahol az üzleti szabály indokolja
 
 ## Tesztelési stratégia
@@ -408,8 +412,10 @@ Ide tartozik különösen:
 
 ## Jelenlegi állapot
 
-- production alkalmazáskonfiguráció még nincs
-- CI/CD még nincs létrehozva az új projektben
+- a production konfiguráció csak változóneveket tartalmazó mintafájlt verziókövet
+- a backend és a migrációs komponens a DB-jelszót kizárólag runtime env-ből kapja
+- a CockroachDB CA-fájl csak read-only runtime mountként érkezik
+- a GitHub Actions image-build és konfigurációs ellenőrzés GitHub-hosted runneren fut
 
 ## Mérési módszer
 
@@ -424,6 +430,8 @@ Ide tartozik különösen:
 - repository csak `.env.example` vagy dokumentált változóneveket tartalmaz
 - GitHub Actions secret értékek GitHub Secrets/Environment mechanizmusból származnak
 - adatbázis-jelszó nem hardcode-olt Java/TypeScript fájlban
+- a migráció productionben `sslmode=verify-full` TLS-ellenőrzést használ
+- az alkalmazásfelhasználó nem kap `system` vagy `crdb_internal` olvasási jogosultságot
 - admin jelszó biztonságos hash formában tárolódik
 
 ## Sikertelenségi kritériumok
@@ -812,7 +820,8 @@ Az MVP-nek nem kell teljes enterprise monitoring stack, de a fő szolgáltatás�
 ## Jelenlegi állapot
 
 - Proxmox infrastruktúra monitorozható
-- alkalmazásszintű health és logolás még nincs
+- a backend, frontend és gateway healthcheckkel rendelkezik
+- a kontrollált deployment hiba esetén root-only, titokszűrt diagnosztikát készít
 
 ## Mérési módszer
 
@@ -830,6 +839,8 @@ Az MVP-nek nem kell teljes enterprise monitoring stack, de a fő szolgáltatás�
 - storage elérhetetlenség felismerhető
 - DB kapcsolat problémája diagnosztizálható
 - container unhealthy állapot elkülöníthető
+- a migráció `exited (0)` sikerállapota és a Flyway history ellenőrizhető
+- aktiválás utáni hiba esetén a diagnosztika a stack leállítása előtt pontosan egyszer készül el
 - logok timestampet és megfelelő logszintet tartalmaznak
 - secret vagy jelszó nem kerül normál logba
 
@@ -846,6 +857,7 @@ MVP:
 - Docker healthcheck
 - Caddy access/error log
 - strukturált backend log
+- kontrollált deployment diagnosztika és egyszer végrehajtható rollback állapotgép
 
 POST-MVP:
 - Prometheus
@@ -966,8 +978,10 @@ A production szerveren végrehajtott ad-hoc kézi módosítás ne legyen a norm�
 
 ## Jelenlegi állapot
 
-- korábbi projektben GitHub Actions és Docker pipeline minta már rendelkezésre áll
-- BTPhoto repository és pipeline még nincs implementálva
+- a backend, frontend és migrations production image buildje GitHub Actionsben definiált
+- a három saját image ugyanazt a teljes, 40 karakteres Git SHA taget használja
+- a production Compose indítási lánca migráció → backend → frontend/gateway
+- a verziókövetett deployment script atomi checkout- és env-cserét, valamint reentrancy-védett rollbacket alkalmaz
 
 ## Mérési módszer
 
@@ -984,6 +998,9 @@ A production szerveren végrehajtott ad-hoc kézi módosítás ne legyen a norm�
 - deploy registry image-ből történik
 - secret nem része az image-nek
 - deploy után health/smoke check fut
+- a migráció minden alkalmazásindítás előtt idempotensen lefuthat
+- sikertelen migráció blokkolja a backend indítását
+- rollback diagnosztika, stackleállítás, checkout- és env-visszaállítás legfeljebb egyszer történik
 - sikertelen quality gate után nincs automatikus production release
 
 ## Sikertelenségi kritériumok
@@ -994,12 +1011,12 @@ A production szerveren végrehajtott ad-hoc kézi módosítás ne legyen a norm�
 
 ## Technikai specifikáció és megjegyzések
 
-Tervezett:
+Elfogadott technikai alap:
 - GitHub Actions
 - GHCR
 - Docker Compose
-- self-hosted runner `docker01`-en
-- GitHub Environment approval
+- GitHub-hosted image build és CockroachDB 26 kompatibilitási teszt
+- kontrollált, kézzel indított `docker01` deployment script
 
 ## Tesztelési stratégia
 

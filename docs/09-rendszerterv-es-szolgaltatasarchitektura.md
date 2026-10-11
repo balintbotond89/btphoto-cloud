@@ -200,7 +200,6 @@ Tervezett technológia:
 - Spring Security
 - Spring Data JPA
 - PostgreSQL JDBC driver CockroachDB kapcsolathoz
-- Flyway
 - Spring Boot Actuator
 - JUnit 5
 - Mockito
@@ -239,6 +238,10 @@ Alapelv:
 - repository: perzisztencia
 - storage: fizikai médiaelérés absztrakciója
 - security: hitelesítés és hozzáférés-ellenőrzés
+
+A backend nem futtat adatbázis-migrációt és nem hoz létre sémát. A
+`cockroachdb` profilban a Hibernate `ddl-auto: validate` módban csak a már
+migrált séma megfelelőségét ellenőrzi.
 
 ### Frontend
 
@@ -358,19 +361,22 @@ MVP:
 - külön alkalmazás-adatbázis
 - külön alkalmazás-user
 - PostgreSQL-kompatibilis JDBC kapcsolat
-- Flyway migráció
+- külön Flyway 12.6.2 migrations image
+- kötelező production TLS `verify-full`
+- az alkalmazásfelhasználó belső CockroachDB-objektumokhoz nem kap hozzáférést
 
-Tervezett kapcsolati logika:
+Kapcsolati logika:
 
 ```text
-backend container
-   ↓
-docker01 belső DB NIC
-   ↓
-sql01:26257
-   ↓
-CockroachDB
+migrations container ── Flyway, verify-full ──┐
+                                              ├── sql01:26257 / CockroachDB
+backend container ──── JDBC, verify-full ─────┘
 ```
+
+A verziózott SQL egyetlen hiteles helye a `database/migrations/`. A migrációs
+konténer minden alkalmazásindítás előtt idempotensen lefuthat, majd sikeres
+`exited (0)` állapotban marad. A CA-fájlt read-only runtime mountként kapja;
+credential és tanúsítvány nem kerül az image-be.
 
 A hitelesítési adatok nem kerülhetnek a Git repository-ba.
 
@@ -380,13 +386,24 @@ A single-node CockroachDB választás fejlesztési/MVP egyszerűsítés. Nem tek
 
 ## 10. Docker szolgáltatásarchitektúra
 
-Kezdeti production Compose:
+Production Compose:
 
 ```text
 docker01
 ├── caddy
 ├── frontend
-└── backend
+├── backend
+└── migrations (egyszer lefutó, exited 0)
+```
+
+Indítási sorrend:
+
+```text
+migrations sikeresen befejeződik
+    ↓ service_completed_successfully
+backend elindul és healthy lesz
+    ↓
+frontend és gateway a meglévő függőségi rend szerint elindul
 ```
 
 Későbbi bővítés:
@@ -396,6 +413,7 @@ docker01
 ├── caddy
 ├── frontend
 ├── backend
+├── migrations
 └── media-worker
 ```
 
@@ -417,6 +435,17 @@ Feladata:
 - hitelesítés
 - megosztási tokenek
 - proofing és letöltési szabályok
+
+### Migrations
+
+Feladata:
+- a `database/migrations/` verziózott SQL-fájljainak idempotens futtatása;
+- a Flyway history kezelése;
+- sikertelen migráció esetén a backend indításának blokkolása.
+
+A szolgáltatás nem publikál portot, csak az application hálózathoz csatlakozik,
+nem root felhasználóval, read-only root fájlrendszerrel, `cap_drop: ALL` és
+`no-new-privileges` védelemmel fut.
 
 ### Frontend
 
@@ -527,17 +556,20 @@ Frontend:
 
 ### CockroachDB integration check
 
-- ideiglenes CockroachDB tesztkörnyezet
-- Flyway migráció
-- repository/integrációs teszt
+- GitHub-hosted runneren digesttel rögzített CockroachDB 26.2.2 tesztkörnyezet
+- a tényleges migrations image első és idempotens második futása
+- `flyway_schema_history` és az egyetlen sikeres V1 ellenőrzése
+- hibás kapcsolat és a backend indítási kapujának negatív tesztje
 - nem használhatja a production `sql01` adatbázist
+- az insecure mód csak eldobható CI-fixture, nem production TLS-helyettesítő
 
 ### Image build
 
 Sikeres `main` build után:
 - backend image
 - frontend image
-- commit SHA alapú verzióazonosítás
+- migrations image
+- mindhárom saját image azonos teljes Git SHA taggel és OCI revision címkével
 - push GHCR-be
 
 ### Production deploy
@@ -672,7 +704,7 @@ Fontos korlátozás:
 | Frontend | Astro 7 + TypeScript | statikus alapú, célzottan interaktív és képcentrikus webes UI |
 | Reverse proxy | Caddy | egyszerű HTTPS és proxy kezelés |
 | Média storage | NFSv4 MicroServer | fájlok leválasztása az alkalmazás VM-ről |
-| DB migráció | Flyway | verziózott séma |
+| DB migráció | külön Flyway 12.6.2 image | verziózott séma a backend indulásától leválasztva |
 | CI/CD | GitHub Actions | automatizált quality gate és deploy |
 | Registry | GHCR | GitHub integráció |
 | Fejlesztés | VS Code + Codex | issue- és követelményvezérelt fejlesztési támogatás |
@@ -687,8 +719,8 @@ Fontos korlátozás:
 - az NFS média storage külön hibapont
 - a média és a jelenlegi backup cél részben azonos fizikai környezetre támaszkodik
 - a videó és RAW workflow még nincs részletesen definiálva
-- a `08-ui-ux-terv.md` jelenleg a korábbi kávés projekt tartalmát hordozza, ezért frissítendő
-- a `03`–`07` dokumentumok még a korábbi projekt azonosítóit tartalmazzák, ezért a most aktualizált BR/US struktúrához újra kell őket vezetni
+- az automatizált production deploy workflow még nincs implementálva; a jelenlegi eljárás kontrollált, kézzel indított script
+- az első üzleti vertikális szelet domain entity-, repository- és API-implementációja még nyitott
 
 ---
 
@@ -720,7 +752,7 @@ Fontos korlátozás:
 - CockroachDB
 - alkalmazás DB/user
 - belső hálózat
-- Flyway baseline
+- külön migrations image és Flyway baseline
 
 ### 4. `docker01`
 
@@ -729,6 +761,7 @@ Fontos korlátozás:
 - NFS media mount
 - Compose
 - Caddy
+- egyszer lefutó migrations service
 
 ### 5. Walking skeleton
 
@@ -793,13 +826,17 @@ A tervezéshez használt fő szakirodalmi háttér:
 
 ## 21. Fejlesztési baseline és következő fázis
 
-A `01`–`09` dokumentumcsomag a `BTPC-BL-2026-09-13-v0.1` baseline része.
+A dokumentumcsomag aktuális technikai állapotát a legfrissebb baseline rögzíti;
+a korábbi baseline-ok történeti, változatlan pillanatképek.
 
 A baseline-ban lezárt fontos döntések:
 - CockroachDB külön `sql01` VM-en;
 - Docker alkalmazási környezet külön `docker01` VM-en;
 - NFSv4 média storage;
 - Spring Boot + Astro 7;
+- külön Flyway migrations image, backendoldali sémamódosítás nélkül;
+- közös teljes Git SHA-val címkézett backend, frontend és migrations image;
+- egyszer végrehajtható deployment rollback állapotgép;
 - média-szintű letöltési jogosultság, alapértelmezetten tiltott;
 - követelményvezérelt VS Code + Codex workflow.
 

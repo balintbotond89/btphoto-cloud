@@ -54,7 +54,7 @@ A nyomonkövethetőség célja, hogy:
 | `BR-FNC-0002` Privát ügyfélgaléria és megosztás | Epic 3; `US-0006`, `US-0007` | `FR-SHR-0001`, `FR-SHR-0002` | `NFR-SEC-0001`, `NFR-USB-0001`, `NFR-USB-0002`, `NFR-PER-0001` | `TR-TCH-0002`, `TR-SEC-0001`, `TR-OPS-0001`, `TR-DEP-0001` | `TC-SHR-0001..0005`, `TC-SEC-0001`, `TC-UI-0001`, `TC-UI-0004`, `TC-UI-0005`, `TC-E2E-0002` |
 | `BR-PRC-0001` Médiafeltöltési és client proofing folyamat támogatása | Epic 2; `US-0004`, `US-0005` | `FR-MED-0001`, `FR-MED-0002` | `NFR-REL-0001`, `NFR-DAT-0001`, `NFR-SEC-0001`, `NFR-PER-0001`, `NFR-OPS-0001` | `TR-STO-0001`, `TR-DAT-0001`, `TR-DAT-0002`, `TR-ARC-0001`, `TR-OPS-0002` | `TC-MED-0001..0007`, `TC-DB-0003`, `TC-OPS-0003`, `TC-E2E-0001` |
 | `BR-PRC-0002` Ügyfélkiválasztás és digitális átadás | Epic 4; `US-0008`, `US-0009`, `US-0010`, `US-0013` | `FR-WFL-0001`, `FR-WFL-0002`, `FR-DWN-0001`, `FR-DWN-0002` | `NFR-DAT-0001`, `NFR-SEC-0001`, `NFR-USB-0002`, `NFR-REL-0001` | `TR-TCH-0001`, `TR-TCH-0002`, `TR-ARC-0001`, `TR-SEC-0001`, `TR-STO-0001` | `TC-WFL-0001..0006`, `TC-DWN-0001..0005`, `TC-E2E-0003` |
-| `BR-DAT-0001` Követhető média- és metaadatmodell | Epic 1, 2, 5; `US-0002`, `US-0003`, `US-0004`, `US-0011` | `FR-DAT-0001`, `FR-DAT-0002`, `FR-MED-0001`, `FR-MED-0002` | `NFR-DAT-0001`, `NFR-MNT-0001`, `NFR-REL-0001` | `TR-DAT-0001`, `TR-DAT-0002`, `TR-ARC-0001`, `TR-STO-0001`, `TR-DEV-0003` | `TC-DAT-*`, `TC-MED-*`, `TC-DB-0001..0004`, `TC-QLT-0001` |
+| `BR-DAT-0001` Követhető média- és metaadatmodell | Epic 1, 2, 5; `US-0002`, `US-0003`, `US-0004`, `US-0011` | `FR-DAT-0001`, `FR-DAT-0002`, `FR-MED-0001`, `FR-MED-0002` | `NFR-DAT-0001`, `NFR-MNT-0001`, `NFR-REL-0001` | `TR-DAT-0001`, `TR-DAT-0002`, `TR-ARC-0001`, `TR-STO-0001`, `TR-DEV-0003` | `TC-DAT-*`, `TC-MED-*`, `TC-DB-0001..0005`, `TC-QLT-0001` |
 | `BR-OPS-0001` Saját infrastruktúrán üzemeltethető, menthető szolgáltatás | Epic 5; `US-0011`, `US-0012` | közvetlen üzleti FR helyett elsősorban NFR/TR lánc | `NFR-MNT-0002`, `NFR-OPS-0001`, `NFR-REC-0001`, `NFR-DEP-0001`, `NFR-SEC-0002` | `TR-INF-0001`, `TR-NET-0001`, `TR-DEP-0001`, `TR-DEP-0002`, `TR-OPS-0001`, `TR-OPS-0002`, `TR-BCK-0001` | `TC-QLT-*`, `TC-OPS-*`, `TC-DEP-*`, `TC-REC-*` |
 | `BR-FNC-0003` Fotós-specifikus automatizálhatóság | Epic 6; POST-MVP | még nincs MVP FR | `NFR-MNT-0001` | `TR-ARC-0001`, `TR-STO-0001` | jelenleg nincs kötelező TC |
 
@@ -245,7 +245,7 @@ A nyomonkövethetőség célja, hogy:
 | FR | nincs szükség klasszikus üzleti FR-re |
 | NFR | `NFR-MNT-0002`, `NFR-DEP-0001` |
 | TR | `TR-DEV-0001`, `TR-DEV-0002`, `TR-DEV-0003`, `TR-DEP-0002` |
-| TC | `TC-QLT-0002`, `TC-QLT-0003`, `TC-DEP-0001` |
+| TC | `TC-QLT-0002`, `TC-QLT-0003`, `TC-DB-0001`, `TC-DB-0005`, `TC-DEP-0001`, `TC-DEP-0005` |
 
 **Lefedettség:** teljes, NFR/TR orientált.
 
@@ -259,7 +259,7 @@ A nyomonkövethetőség célja, hogy:
 | FR | nincs szükség klasszikus üzleti FR-re |
 | NFR | `NFR-OPS-0001`, `NFR-REC-0001`, `NFR-DEP-0001`, `NFR-SEC-0002` |
 | TR | `TR-INF-0001`, `TR-DEP-0001`, `TR-DEP-0002`, `TR-OPS-0001`, `TR-OPS-0002`, `TR-BCK-0001` |
-| TC | `TC-OPS-0001..0003`, `TC-DEP-0002..0004`, `TC-REC-0001..0004` |
+| TC | `TC-OPS-0001..0003`, `TC-DB-0005`, `TC-DEP-0002..0006`, `TC-REC-0001..0004` |
 
 **Lefedettség:** teljes, NFR/TR orientált.
 
@@ -315,16 +315,16 @@ A `GAP-001` lezárásával a letöltési folyamat is teljes BR → US → FR →
 | --- | --- | --- |
 | `NFR-MNT-0001` Rétegzett szerkezet | `TR-ARC-0001`, `TR-TCH-0001` | `TC-QLT-0001` |
 | `NFR-REL-0001` Üzleti/storage konzisztencia | `TR-STO-0001`, `TR-DAT-0001`, `TR-ARC-0001` | `TC-MED-0003`, `TC-MED-0004`, `TC-WFL-0002`, `TC-WFL-0003` |
-| `NFR-DAT-0001` Adatintegritás | `TR-DAT-0001`, `TR-DAT-0002`, `TR-DEV-0003` | `TC-DB-0001..0004` |
+| `NFR-DAT-0001` Adatintegritás | `TR-DAT-0001`, `TR-DAT-0002`, `TR-DEV-0003` | `TC-DB-0001..0005` |
 | `NFR-SEC-0001` Jogosultságvédelem | `TR-SEC-0001`, `TR-OPS-0001`, `TR-STO-0001` | `TC-AUT-0003`, `TC-MED-0007`, `TC-SHR-0004`, `TC-SHR-0005`, `TC-SEC-0001..0002`, `TC-DWN-0002` |
 | `NFR-SEC-0002` Secret kezelés | `TR-SEC-0001`, `TR-DEP-0002` | `TC-SEC-0003`, `TC-SEC-0004`, `TC-DEP-0004` |
 | `NFR-MNT-0002` Automatizált quality gate | `TR-DEV-0001`, `TR-DEV-0002`, `TR-DEV-0003`, `TR-DEP-0002` | `TC-QLT-0002`, `TC-QLT-0003`, `TC-DEP-0001` |
 | `NFR-USB-0001` Egységes hiba-visszajelzés | `TR-ARC-0001`, `TR-TCH-0001`, `TR-TCH-0002` | `TC-API-0001`, `TC-API-0002`, `TC-API-0003`, `TC-UI-0008` |
 | `NFR-USB-0002` Reszponzív és hozzáférhető UI | `TR-TCH-0002` | `TC-UI-0001..0008` |
 | `NFR-PER-0001` Teljesítmény | `TR-TCH-0002`, `TR-STO-0001`, `TR-OPS-0002` | `TC-UI-0006`, `TC-UI-0007`, `TC-PER-0001`, `TC-PER-0002`, `TC-PER-0003` |
-| `NFR-OPS-0001` Megfigyelhetőség | `TR-OPS-0001`, `TR-OPS-0002` | `TC-OPS-0001`, `TC-OPS-0002`, `TC-OPS-0003` |
+| `NFR-OPS-0001` Megfigyelhetőség | `TR-OPS-0001`, `TR-OPS-0002`, `TR-DEP-0001` | `TC-OPS-0001`, `TC-OPS-0002`, `TC-OPS-0003`, `TC-DEP-0006` |
 | `NFR-REC-0001` Backup/restore | `TR-BCK-0001`, `TR-INF-0001` | `TC-REC-0001`, `TC-REC-0002`, `TC-REC-0003`, `TC-REC-0004` |
-| `NFR-DEP-0001` Reprodukálható deployment | `TR-DEP-0001`, `TR-DEP-0002`, `TR-OPS-0002` | `TC-DEP-0001`, `TC-DEP-0002`, `TC-DEP-0003` |
+| `NFR-DEP-0001` Reprodukálható deployment | `TR-DAT-0002`, `TR-DEP-0001`, `TR-DEP-0002`, `TR-OPS-0002` | `TC-DB-0005`, `TC-DEP-0001..0006` |
 | `NFR-PRV-0001` Minimális adatkezelés | `TR-SEC-0001`, `TR-DOC-0001` | `TC-SEC-0003`, API/DTO review |
 
 ---
@@ -338,15 +338,15 @@ A `GAP-001` lezárásával a letöltési folyamat is teljes BR → US → FR →
 | `TR-TCH-0001` | `TC-QLT-0002`, backend unit/controller/integration tesztek |
 | `TR-TCH-0002` | `TC-QLT-0003`, `TC-UI-*`, `TC-E2E-*` |
 | `TR-ARC-0001` | `TC-QLT-0001` |
-| `TR-DAT-0001` | `TC-DB-0001..0004`, `TC-REC-0003` |
-| `TR-DAT-0002` | `TC-DB-0001` |
+| `TR-DAT-0001` | `TC-DB-0001..0005`, `TC-REC-0003` |
+| `TR-DAT-0002` | `TC-DB-0001`, `TC-DB-0005` |
 | `TR-STO-0001` | `TC-MED-0001..0007`, `TC-OPS-0003`, `TC-REC-0004` |
 | `TR-SEC-0001` | `TC-AUT-*`, `TC-SHR-*`, `TC-SEC-*` |
 | `TR-DEV-0001` | `TC-QLT-0002` + unit/controller tesztkatalógus |
 | `TR-DEV-0002` | `TC-QLT-0002` |
-| `TR-DEV-0003` | `TC-DB-0001..0004` |
-| `TR-DEP-0001` | `TC-DEP-0003`, `TC-REC-0001` |
-| `TR-DEP-0002` | `TC-DEP-0001..0004` |
+| `TR-DEV-0003` | `TC-DB-0001`, `TC-DB-0005`, későbbi repository-integrációs tesztek |
+| `TR-DEP-0001` | `TC-DB-0005`, `TC-DEP-0003`, `TC-DEP-0005`, `TC-DEP-0006`, `TC-REC-0001` |
+| `TR-DEP-0002` | `TC-DEP-0001..0005` |
 | `TR-OPS-0001` | `TC-DEP-0003`, HTTPS/proxy smoke teszt |
 | `TR-OPS-0002` | `TC-OPS-0001..0003` |
 | `TR-BCK-0001` | `TC-REC-0001..0004` |

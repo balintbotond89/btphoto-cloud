@@ -642,15 +642,22 @@ Az MVP fő üzleti útvonalai:
 
 # 11. TC-DB – CockroachDB és Flyway
 
-## TC-DB-0001 – Flyway baseline futása tiszta CockroachDB-n
+## TC-DB-0001 – Flyway baseline és idempotencia CockroachDB 26-on
 
 - Teszt azonosító: `TC-DB-0001`
-- Teszt neve: Flyway baseline futása tiszta CockroachDB-n
+- Teszt neve: Flyway baseline és idempotencia CockroachDB 26-on
 - Típus: integrációs teszt
 - Prioritás: kritikus
 - Kapcsolódó TR: `TR-DAT-0002`
 - Kapcsolódó NFR: `NFR-DAT-0001`
-- Leírás: Üres CockroachDB példányon a teljes migrációs lánc sikeresen lefut.
+- Előfeltétel: eldobható, digesttel rögzített CockroachDB 26.2.2 CI-konténer és a tényleges migrations image; production `sql01` nem használható.
+- Lépések:
+  1. üres `btphoto` adatbázison le kell futtatni a teljes migrációs láncot;
+  2. ellenőrizni kell a `flyway_schema_history` létrejöttét és az egyetlen sikeres V1 sort;
+  3. ugyanazt az image-et változatlan adatbázison másodszor is le kell futtatni;
+  4. igazolni kell, hogy a második futás sikeres és nem hoz létre duplikált verziót.
+- Elvárt eredmény: mindkét futás nulla exit kóddal zárul, a V1 pontosan egyszer szerepel sikeresként. A jelenlegi V1 technikai baseline, üzleti táblát szándékosan még nem hoz létre.
+- Megjegyzés: az insecure mód kizárólag eldobható CI-fixture; nem helyettesíti a production `verify-full` TLS smoke tesztet.
 
 ## TC-DB-0002 – Gallery–Client foreign key integritás
 
@@ -676,6 +683,16 @@ Az MVP fő üzleti útvonalai:
 - Típus: repository/integrációs teszt
 - Prioritás: magas
 - Leírás: A választott adatmodell szerint ugyanaz a media egy selectionben ne legyen kétszer menthető.
+
+## TC-DB-0005 – Sikertelen migráció blokkolja a backend indítását
+
+- Teszt azonosító: `TC-DB-0005`
+- Teszt neve: Sikertelen migráció blokkolja a backend indítását
+- Típus: Compose integrációs teszt
+- Prioritás: kritikus
+- Kapcsolódó TR: `TR-DAT-0002`, `TR-DEP-0001`
+- Kapcsolódó NFR: `NFR-DAT-0001`, `NFR-DEP-0001`
+- Leírás: Hibás kapcsolati adatokkal a migrations service nem nulla kóddal áll le, ezért a `service_completed_successfully` előfeltétel nem teljesül és a backend próbaszolgáltatás nem indul el.
 
 ---
 
@@ -779,6 +796,26 @@ Az MVP fő üzleti útvonalai:
 - Prioritás: kritikus
 - Kapcsolódó NFR: `NFR-SEC-0002`
 - Leírás: Production deploy csak GitHub Secret/Environment vagy szerveroldali biztonságos konfigurációból kap titkot.
+
+## TC-DEP-0005 – Három production image közös release SHA-ja
+
+- Teszt azonosító: `TC-DEP-0005`
+- Teszt neve: Három production image közös release SHA-ja
+- Típus: CI/konfigurációs szerződés teszt
+- Prioritás: kritikus
+- Kapcsolódó NFR: `NFR-DEP-0001`
+- Kapcsolódó TR: `TR-DEP-0001`, `TR-DEP-0002`
+- Leírás: A backend, frontend és migrations image ugyanazt a teljes, 40 karakteres kisbetűs Git SHA taget és az ennek megfelelő OCI revision címkét használja. A hiányzó, eltérő, rövid, nagybetűs vagy `latest` tag elutasítandó.
+
+## TC-DEP-0006 – Egyszer végrehajtható rollback állapotgép
+
+- Teszt azonosító: `TC-DEP-0006`
+- Teszt neve: Egyszer végrehajtható rollback állapotgép
+- Típus: mockalapú shellteszt
+- Prioritás: kritikus
+- Kapcsolódó NFR: `NFR-OPS-0001`, `NFR-DEP-0001`
+- Kapcsolódó TR: `TR-DEP-0001`
+- Leírás: Aktiválás utáni migrációs vagy runtime hiba esetén a hibakezelő letiltja saját trapjeit, a diagnosztika és stackleállítás pontosan egyszer, a checkout- és env-visszaállítás legfeljebb egyszer fut. Diagnosztikai hiba nem állíthatja le a rollbacket; rollback-részhiba végül egyetlen valós sikertelen státuszt ad. Volume, adatbázis és failed checkout nem törölhető automatikusan.
 
 ---
 
