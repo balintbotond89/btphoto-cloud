@@ -13,6 +13,20 @@ a `sql01` gépet. Ebben a fázisban a backend nem kapja meg az NFS média mounto
 és a gateway nem konfigurál publikus 80/443 portot, DNS-nevet vagy automatikus
 HTTPS-t.
 
+## Caddy runtime capability
+
+A frontend és a gateway a hivatalos Caddy image-re épül. Az image
+`/usr/bin/caddy` binárisa `cap_net_bind_service=ep` fájlképességgel rendelkezik,
+ezért a teljes capabilitykészlet eldobása a bináris indítását `operation not
+permitted` hibával megakadályozta. A két Caddy-alapú szolgáltatás számára ezért
+kizárólag a `NET_BIND_SERVICE` capability kerül célzottan visszaadásra; a
+backend nem kap hozzáadott capabilityt.
+
+Mindhárom szolgáltatásnál megmarad a `cap_drop: ALL`, a read-only root
+fájlrendszer és a `no-new-privileges:true` védelem. A frontend és a gateway
+továbbra is nem root felhasználóként fut. Hostportot csak a gateway publikál,
+kizárólag a `127.0.0.1:8080` címen.
+
 ## Image-ek és hálózatok
 
 A stack kizárólag teljes Git commit SHA-val címkézett GHCR image-et fogad:
