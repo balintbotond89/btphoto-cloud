@@ -23,7 +23,18 @@ Pull request esetén:
   elutasítja a `latest`, rövid, nagybetűs, valamint 39 és 41 karakteres tageket;
 - a digesttel rögzített hivatalos Caddy image `validate` parancsával ellenőrzi a
   gateway és a frontend Caddyfile-t;
+- strukturáltan ellenőrzi, hogy a backend nem kap hozzáadott capabilityt, a
+  frontend és a gateway pedig a `cap_drop: ALL` mellett kizárólag a
+  `NET_BIND_SERVICE` capabilityt kapja vissza;
+- ellenőrzi a read-only root fájlrendszert, a `no-new-privileges` védelmet és a
+  kizárólagos `127.0.0.1:8080` gateway portpublikálást;
 - felépíti a backend és frontend production image-et;
+- a PR-ben épített frontend image-et ideiglenes lokális CI-taggel betölti, de
+  nem publikálja;
+- a minimális capability-szerződés strukturális ellenőrzése után izolált,
+  külső hálózat és hostport nélküli pozitív runtime- és health-teszttel
+  ellenőrzi a frontend `/health` és a gateway `/_gateway/health` végpontját a
+  célzott `NET_BIND_SERVICE` capability mellett;
 - nem jelentkezik be a GHCR-be;
 - nem pushol image-et;
 - csak `contents: read` jogosultságot kap;

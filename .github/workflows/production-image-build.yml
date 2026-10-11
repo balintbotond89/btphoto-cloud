@@ -37,7 +37,8 @@ jobs:
 
           valid_env="${RUNNER_TEMP}/btphoto-production-valid.env"
           invalid_env="${RUNNER_TEMP}/btphoto-production-invalid.env"
-          trap 'rm -f "${valid_env}" "${invalid_env}"' EXIT
+          resolved_config="${RUNNER_TEMP}/btphoto-production-compose.json"
+          trap 'rm -f "${valid_env}" "${invalid_env}" "${resolved_config}"' EXIT
 
           write_env() {
             local target_file=$1
@@ -56,6 +57,63 @@ jobs:
           valid_sha='0123456789abcdef0123456789abcdef01234567'
           write_env "${valid_env}" "${valid_sha}"
           sh deploy/validate-production-config.sh "${valid_env}"
+
+          docker compose \
+            --env-file "${valid_env}" \
+            -f deploy/compose.production.yml \
+            config --format json > "${resolved_config}"
+
+          python3 - "${resolved_config}" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as config_file:
+              config = json.load(config_file)
+
+          services = config["services"]
+          backend = services["backend"]
+          frontend = services["frontend"]
+          caddy = services["caddy"]
+
+          def require(condition, message):
+              if not condition:
+                  raise SystemExit(message)
+
+          require("ALL" in backend.get("cap_drop", []),
+                  "A backend cap_drop listájából hiányzik az ALL.")
+          require(not backend.get("cap_add"),
+                  "A backend nem kaphat hozzáadott capabilityt.")
+
+          for name, service in (("frontend", frontend), ("caddy", caddy)):
+              require(service.get("cap_drop") == ["ALL"],
+                      f"A {name} cap_drop értéke nem pontosan ALL.")
+              require(service.get("cap_add") == ["NET_BIND_SERVICE"],
+                      f"A {name} cap_add értéke nem pontosan NET_BIND_SERVICE.")
+
+          for name, service in services.items():
+              require(service.get("read_only") is True,
+                      f"A {name} read_only védelme hiányzik.")
+              require("no-new-privileges:true" in service.get("security_opt", []),
+                      f"A {name} no-new-privileges védelme hiányzik.")
+
+          require(not backend.get("ports"),
+                  "A backend nem publikálhat hostportot.")
+          require(not frontend.get("ports"),
+                  "A frontend nem publikálhat hostportot.")
+
+          ports = caddy.get("ports", [])
+          require(len(ports) == 1,
+                  "A gateway pontosan egy hostportot publikálhat.")
+          gateway_port = ports[0]
+          require(gateway_port.get("host_ip") == "127.0.0.1",
+                  "A gateway host IP-címe nem 127.0.0.1.")
+          require(str(gateway_port.get("published")) == "8080",
+                  "A gateway publikált portja nem 8080.")
+          require(gateway_port.get("target") == 8080,
+                  "A gateway konténerportja nem 8080.")
+          require(gateway_port.get("protocol") == "tcp",
+                  "A gateway portprotokollja nem TCP.")
+          PY
 
           for invalid_tag in \
             latest \
@@ -118,12 +176,89 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: false
           pull: true
+          load: ${{ matrix.component == 'frontend' }}
+          tags: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha }}
           build-args: |
             OCI_SOURCE=${{ github.server_url }}/${{ github.repository }}
             OCI_REVISION=${{ github.event.pull_request.head.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+
+      - name: Caddy runtime capability regresszió ellenőrzése
+        if: matrix.component == 'frontend'
+        shell: bash
+        env:
+          FRONTEND_RUNTIME_IMAGE: btphoto-frontend:ci-${{ github.event.pull_request.head.sha }}
+          GATEWAY_RUNTIME_IMAGE: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+        run: |
+          set -Eeuo pipefail
+
+          suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          frontend_container="btphoto-frontend-cap-${suffix}"
+          gateway_container="btphoto-gateway-cap-${suffix}"
+
+          cleanup() {
+            docker rm --force \
+              "${frontend_container}" \
+              "${gateway_container}" \
+              >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          wait_for_endpoint() {
+            local container_name=$1
+            local endpoint=$2
+
+            for _ in $(seq 1 30); do
+              if docker exec "${container_name}" \
+                wget --no-verbose --tries=1 --spider "${endpoint}" \
+                >/dev/null 2>&1; then
+                return 0
+              fi
+
+              if [[ "$(docker inspect --format '{{.State.Status}}' "${container_name}")" != 'running' ]]; then
+                echo "::error::A ${container_name} konténer idő előtt leállt."
+                docker inspect --format \
+                  'state={{.State.Status}} error={{.State.Error}} exit={{.State.ExitCode}}' \
+                  "${container_name}"
+                return 1
+              fi
+              sleep 1
+            done
+
+            echo "::error::A ${container_name} konténer végpontja nem vált elérhetővé: ${endpoint}"
+            return 1
+          }
+
+          docker run --detach \
+            --name "${frontend_container}" \
+            --network none \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --cap-drop ALL \
+            --cap-add NET_BIND_SERVICE \
+            --security-opt no-new-privileges:true \
+            --user 10001:10001 \
+            --env XDG_CONFIG_HOME=/tmp/caddy-config \
+            --env XDG_DATA_HOME=/tmp/caddy-data \
+            "${FRONTEND_RUNTIME_IMAGE}"
+          wait_for_endpoint "${frontend_container}" 'http://127.0.0.1:8080/health'
+
+          docker run --detach \
+            --name "${gateway_container}" \
+            --network none \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --cap-drop ALL \
+            --cap-add NET_BIND_SERVICE \
+            --security-opt no-new-privileges:true \
+            --user 65534:65534 \
+            --env XDG_CONFIG_HOME=/tmp/caddy-config \
+            --env XDG_DATA_HOME=/tmp/caddy-data \
+            --volume "${GITHUB_WORKSPACE}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            "${GATEWAY_RUNTIME_IMAGE}"
+          wait_for_endpoint "${gateway_container}" 'http://127.0.0.1:8080/_gateway/health'
 
   publish-main-images:
     name: Publish main image (${{ matrix.component }})
