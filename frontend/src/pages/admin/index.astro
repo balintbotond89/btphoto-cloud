@@ -1,0 +1,105 @@
+---
+import ErrorState from "@/components/feedback/ErrorState.astro"
+import LoadingState from "@/components/feedback/LoadingState.astro"
+import ThemeToggle from "@/components/ThemeToggle.astro"
+import Badge from "@/components/ui/Badge.astro"
+import Button from "@/components/ui/Button.astro"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="Admin munkaterület | BTPhoto Private Cloud"
+  description="A BTPhoto Private Cloud hitelesített adminisztrátori munkaterülete."
+>
+  <div class="admin-shell">
+    <header class="auth-header">
+      <a class="wordmark" href="/" aria-label="BTPhoto Private Cloud kezdőlap">
+        <span class="wordmark__mark" aria-hidden="true"></span>
+        <span>
+          <strong>BTPHOTO</strong>
+          <small>ADMIN WORKSPACE</small>
+        </span>
+      </a>
+      <div class="site-header__actions">
+        <span class="build-label">HITELESÍTETT NÉZET</span>
+        <ThemeToggle />
+      </div>
+    </header>
+
+    <main id="fo-tartalom" class="admin-main" data-admin-session>
+      <div class="admin-state" data-admin-loading>
+        <LoadingState
+          title="Munkamenet ellenőrzése"
+          description="A kezelőfelület ellenőrzi az aktív adminisztrátori munkamenetet."
+        />
+      </div>
+
+      <div class="admin-state" data-admin-error hidden>
+        <ErrorState
+          title="A munkamenet nem ellenőrizhető"
+          description="A backend átmenetileg nem érhető el. A hozzáférés ellenőrzés nélkül nem folytatható."
+        >
+          <Button type="button" variant="outline" dataAction="admin-retry">
+            Újrapróbálás
+          </Button>
+        </ErrorState>
+      </div>
+
+      <section class="admin-dashboard" data-admin-content hidden aria-labelledby="admin-title">
+        <header class="admin-dashboard__header">
+          <div>
+            <p class="technical-label">ADMIN MUNKATERÜLET / 001</p>
+            <h1 id="admin-title">Áttekintés</h1>
+          </div>
+          <div class="admin-identity">
+            <span>
+              Bejelentkezve: <strong data-admin-username></strong>
+            </span>
+            <Badge tone="success">Aktív munkamenet</Badge>
+            <Button type="button" variant="outline" size="small" dataAction="admin-logout">
+              Kijelentkezés
+            </Button>
+          </div>
+        </header>
+
+        <div class="admin-dashboard__grid">
+          <article class="admin-placeholder">
+            <p class="technical-label">RENDSZERÁLLAPOT / AUTH</p>
+            <h2>A hozzáférés ellenőrzött</h2>
+            <p>
+              A backend érvényes adminisztrátori munkamenetet igazolt. A további admin
+              funkciók a következő fejlesztési checkpointokban kerülnek ide.
+            </p>
+          </article>
+          <article class="admin-placeholder admin-placeholder--muted">
+            <p class="technical-label">KÖVETKEZŐ MODULOK</p>
+            <h2>Galériák és ügyfelek</h2>
+            <p>
+              Ez a checkpoint kizárólag a biztonságos belépési és kijelentkezési folyamatot
+              valósítja meg; üzleti admin funkciót nem vezet be.
+            </p>
+          </article>
+        </div>
+
+        <p class="admin-session-status" data-admin-status role="status" aria-live="polite"></p>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<script>
+  import { mountAdminSession } from "@/scripts/admin-session"
+
+  function initializeAdminSession() {
+    const root = document.querySelector<HTMLElement>("[data-admin-session]")
+    if (!root || root.dataset.initialized === "true") {
+      return
+    }
+
+    root.dataset.initialized = "true"
+    mountAdminSession(root)
+  }
+
+  initializeAdminSession()
+  document.addEventListener("astro:page-load", initializeAdminSession)
+</script>

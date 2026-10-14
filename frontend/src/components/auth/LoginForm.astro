@@ -1,0 +1,54 @@
+---
+import Button from "@/components/ui/Button.astro"
+import Input from "@/components/ui/Input.astro"
+---
+
+<section class="auth-card" data-login-form-root aria-labelledby="login-title">
+  <header class="auth-card__header">
+    <p class="technical-label">ADMIN HOZZÁFÉRÉS / 001</p>
+    <h1 id="login-title">Bejelentkezés</h1>
+    <p>
+      A kezelőfelület kizárólag hitelesített adminisztrátori munkamenettel érhető el.
+    </p>
+  </header>
+
+  <form class="auth-form" data-login-form novalidate>
+    <Input
+      id="identifier"
+      name="identifier"
+      label="Felhasználónév vagy e-mail-cím"
+      autocomplete="username"
+      required
+    />
+    <Input
+      id="password"
+      name="password"
+      label="Jelszó"
+      type="password"
+      autocomplete="current-password"
+      required
+    />
+    <p class="auth-form__status" data-login-status role="status" aria-live="polite"></p>
+    <Button type="submit" dataAction="login-submit">
+      Bejelentkezés
+    </Button>
+  </form>
+</section>
+
+<script>
+  import { mountLoginForm } from "@/scripts/login-form"
+
+  function initializeLoginForms() {
+    document.querySelectorAll<HTMLElement>("[data-login-form-root]").forEach((root) => {
+      if (root.dataset.initialized === "true") {
+        return
+      }
+
+      root.dataset.initialized = "true"
+      mountLoginForm(root)
+    })
+  }
+
+  initializeLoginForms()
+  document.addEventListener("astro:page-load", initializeLoginForms)
+</script>
