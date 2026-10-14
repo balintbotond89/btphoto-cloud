@@ -645,17 +645,27 @@ Mobil:
 
 - felhasználónév/e-mail
 - jelszó
-- bejelentkezás CTA
+- bejelentkezés CTA
 
 ### Állapotok
 
 - loading
 - invalid credentials
 - backend unavailable
+- lejárt vagy hiányzó session
+- sikeres bejelentkezés utáni átirányítás
+- kijelentkezés
+
+Az invalid credentials állapot nem különbözteti meg a nem létező felhasználónevet és a hibás jelszót. A hibaüzenet élő régióban jelenik meg, a mezők valódi címkét, a felhasználónévmező `autocomplete="username"`, a jelszómező pedig `autocomplete="current-password"` beállítást kap. Beküldés közben az ismételt elküldés tiltott.
 
 ### Backend
 
+- `GET /api/auth/csrf`
 - `POST /api/auth/login`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+
+A sikeres login után az admin a `/admin` route-ra kerül. Az Astro route és a kliensoldali átirányítás használhatósági funkció; a jogosultságot minden esetben a Spring Security ellenőrzi. A production session cookie `HttpOnly`, `Secure` és `SameSite=Lax`, ezért a végleges böngészős elfogadás HTTPS-kapcsolaton történik.
 
 ---
 
@@ -1231,8 +1241,9 @@ POST-MVP:
 
 ## Login
 
+- `GET /api/auth/csrf`
 - `POST /api/auth/login`
-- opcionális `GET /api/auth/me`
+- `GET /api/auth/me`
 - `POST /api/auth/logout`
 
 ## Ügyfél lista

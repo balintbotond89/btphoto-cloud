@@ -37,7 +37,7 @@ A cél, hogy a dokumentum elég részletes legyen a fejlesztéshez és a Codex f
   - Mint fotós/admin, azt szeretném, hogy biztonságosan bejelentkezhessek az admin felületre, azért hogy csak jogosult felhasználó kezelhesse az ügyfélanyagokat.
 - Részletes leírás: A belső admin felületek és módosító API-végpontok csak hitelesített felhasználó számára legyenek elérhetők.
 - Elfogadási kritériumok:
-  - `AC-FR-AUT-0001-01`: Adott érvényes admin hitelesítési adat, amikor a felhasználó bejelentkezik, akkor a rendszer létrehoz egy érvényes munkamenetet vagy tokent és megnyitja az admin felületet.
+  - `AC-FR-AUT-0001-01`: Adott érvényes admin hitelesítési adat, amikor a felhasználó bejelentkezik, akkor a rendszer létrehoz egy érvényes szerveroldali munkamenetet és megnyitja az admin felületet.
   - `AC-FR-AUT-0001-02`: Adott a felhasználó nincs hitelesítve, amikor védett admin végpontot hív, akkor a rendszer megtagadja a hozzáférést.
   - `AC-FR-AUT-0001-03`: Adott hibás hitelesítési adat, amikor bejelentkezési kísérlet történik, akkor a rendszer általános, biztonságos hibaüzenettel elutasítja.
 - Nyomonkövethetőség:

@@ -162,7 +162,7 @@ Az MVP fő üzleti útvonalai:
 - Pozitív/negatív: negatív
 - Elvárt eredmény:
   - hozzáférés elutasítva
-  - nincs session/token
+  - nem jön létre hitelesített session; a CSRF-védelemhez használt anonim session fennmaradhat
   - a válasz nem árulja el, hogy a jelszó vagy a felhasználónév volt hibás
 
 ## TC-AUT-0003 – Védett admin endpoint hitelesítés nélkül
@@ -178,7 +178,7 @@ Az MVP fő üzleti útvonalai:
 - Leírás: Egy admin végpont közvetlen hívása hitelesítés nélkül nem adhat vissza admin adatot.
 - Pozitív/negatív: negatív
 - Elvárt eredmény:
-  - 401 vagy 403 a végleges security modell szerint
+  - 401 Unauthorized
   - válaszban nincs védett tartalom
 
 ---
@@ -653,10 +653,10 @@ Az MVP fő üzleti útvonalai:
 - Előfeltétel: eldobható, digesttel rögzített CockroachDB 26.2.2 CI-konténer és a tényleges migrations image; production `sql01` nem használható.
 - Lépések:
   1. üres `btphoto` adatbázison le kell futtatni a teljes migrációs láncot;
-  2. ellenőrizni kell a `flyway_schema_history` létrejöttét és az egyetlen sikeres V1 sort;
+  2. ellenőrizni kell a `flyway_schema_history` létrejöttét, a sikeres V1 és V2 sorokat, valamint az `admin_user` séma létrejöttét;
   3. ugyanazt az image-et változatlan adatbázison másodszor is le kell futtatni;
   4. igazolni kell, hogy a második futás sikeres és nem hoz létre duplikált verziót.
-- Elvárt eredmény: mindkét futás nulla exit kóddal zárul, a V1 pontosan egyszer szerepel sikeresként. A jelenlegi V1 technikai baseline, üzleti táblát szándékosan még nem hoz létre.
+- Elvárt eredmény: mindkét futás nulla exit kóddal zárul, a V1 és a V2 pontosan egyszer szerepel sikeresként, és az `admin_user` tábla elérhető. A V1 technikai baseline, az admin-hitelesítés sémáját a V2 hozza létre.
 - Megjegyzés: az insecure mód kizárólag eldobható CI-fixture; nem helyettesíti a production `verify-full` TLS smoke tesztet.
 
 ## TC-DB-0002 – Gallery–Client foreign key integritás

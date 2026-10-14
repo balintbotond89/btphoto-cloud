@@ -222,6 +222,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Temurin Java 21 beállítása a CockroachDB repository-teszthez
+        if: matrix.component == 'migrations'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            backend/pom.xml
+            backend/.mvn/wrapper/maven-wrapper.properties
+
       - name: Docker Buildx beállítása
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -369,6 +380,7 @@ jobs:
           docker run --detach \
             --name "${database_container}" \
             --network "${network}" \
+            --publish 127.0.0.1::26257 \
             --read-only \
             --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
             --tmpfs /cockroach/cockroach-data:rw,nosuid,nodev,size=512m \
@@ -474,16 +486,33 @@ jobs:
           history_count=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
             --format=csv \
-            --execute "SELECT count(*) FROM public.flyway_schema_history WHERE version = '1' AND success" \
+            --execute "SELECT count(*) FROM public.flyway_schema_history WHERE version IN ('1', '2') AND success" \
             | tail -n 1 | tr -d '\r')
-          [[ "${history_count}" == "1" ]]
+          [[ "${history_count}" == "2" ]]
 
           public_table_count=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
             --format=csv \
             --execute "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'" \
             | tail -n 1 | tr -d '\r')
-          [[ "${public_table_count}" == "1" ]]
+          [[ "${public_table_count}" == "2" ]]
+
+          admin_column_count=$(docker exec "${database_container}" \
+            cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
+            --format=csv \
+            --execute "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'admin_user'" \
+            | tail -n 1 | tr -d '\r')
+          [[ "${admin_column_count}" == "7" ]]
+
+          database_host_port=$(docker inspect \
+            --format '{{(index (index .NetworkSettings.Ports "26257/tcp") 0).HostPort}}' \
+            "${database_container}")
+          chmod +x backend/mvnw
+          BTPHOTO_TEST_JDBC_URL="jdbc:postgresql://127.0.0.1:${database_host_port}/btphoto?sslmode=disable" \
+          BTPHOTO_TEST_DB_USERNAME=btphoto_app \
+          BTPHOTO_TEST_DB_PASSWORD='' \
+            ./backend/mvnw -B -ntp -f backend/pom.xml \
+              -Dtest=AdminUserRepositoryCockroachTest test
 
           if run_migration "${migration_invalid}" \
             'jdbc:postgresql://missing-cockroach.invalid:26257/btphoto?sslmode=disable'; then
