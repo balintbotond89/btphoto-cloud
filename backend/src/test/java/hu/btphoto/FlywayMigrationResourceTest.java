@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FlywayMigrationResourceTest {
 
     private static final String BASELINE_MIGRATION = "db/migration/V1__baseline.sql";
+    private static final String ADMIN_USER_MIGRATION = "db/migration/V2__create_admin_user.sql";
     private static final Pattern VERSIONED_MIGRATION_NAME =
             Pattern.compile("^V[0-9]+__[a-z0-9_]+\\.sql$");
 
@@ -29,6 +30,23 @@ class FlywayMigrationResourceTest {
 
         assertAll(
                 () -> assertTrue(VERSIONED_MIGRATION_NAME.matcher(filename).matches()),
+                () -> assertFalse(content.isBlank())
+        );
+    }
+
+    @Test
+    void packagesAdminUserMigrationResource() throws IOException {
+        var resource = new ClassPathResource(ADMIN_USER_MIGRATION);
+        assertTrue(resource.exists());
+
+        var content = resource.getContentAsString(StandardCharsets.UTF_8);
+        var filename = resource.getFilename();
+        assertNotNull(filename);
+
+        assertAll(
+                () -> assertTrue(VERSIONED_MIGRATION_NAME.matcher(filename).matches()),
+                () -> assertTrue(content.contains("CREATE TABLE admin_user")),
+                () -> assertTrue(content.contains("password_hash")),
                 () -> assertFalse(content.isBlank())
         );
     }

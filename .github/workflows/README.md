@@ -39,8 +39,10 @@ Pull request esetén:
   ellenőrzi a frontend `/health` és a gateway `/_gateway/health` végpontját a
   célzott `NET_BIND_SERVICE` capability mellett;
 - digesttel rögzített CockroachDB 26.2.2 CI-fixture-ben kétszer lefuttatja a
-  tényleges migrations image-et, ellenőrzi az egyetlen sikeres V1 history sort,
-  majd hibás kapcsolatnál igazolja a backend indítási kapujának blokkolását;
+  tényleges migrations image-et, ellenőrzi a sikeres V1 és V2 history sorokat,
+  az `admin_user` sémát és ugyanazon eldobható adatbázison a JPA repository
+  integrációját, majd hibás kapcsolatnál igazolja a backend indítási kapujának
+  blokkolását;
 - nem jelentkezik be a GHCR-be;
 - nem pushol image-et;
 - csak `contents: read` jogosultságot kap;

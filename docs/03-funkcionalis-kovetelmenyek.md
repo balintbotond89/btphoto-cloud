@@ -46,7 +46,7 @@ A dokumentum célja, hogy a fejlesztés megkezdésekor ne kelljen újraértelmez
 - Státusz: elfogadott
 - Prioritás: kritikus
 - Leírás: A rendszer biztosítsa a fotós/admin hitelesítését, és akadályozza meg, hogy hitelesítés nélküli felhasználó belső admin funkciókat vagy módosító API-végpontokat érjen el.
-- Részletes leírás: A felhasználó érvényes admin hitelesítési adatokkal beléphet. A sikeres hitelesítés után a rendszer egy hitelesített munkamenetet biztosít. A pontos technikai mechanizmus — szerveroldali session vagy tokenalapú megoldás — technikai követelményként kerül véglegesítésre, ezért a funkcionális követelmény ezt nem köti egy konkrét implementációhoz.
+- Részletes leírás: A felhasználó érvényes admin hitelesítési adatokkal beléphet. A sikeres hitelesítés után a rendszer szerveroldali HTTP sessiont hoz létre, amelyet a böngésző biztonságos session cookie-val azonosít. A munkamenet létrehozása, ellenőrzése és érvénytelenítése minden esetben backend oldali felelősség.
 
 ## IPO modell
 
@@ -73,16 +73,27 @@ A dokumentum célja, hogy a fejlesztés megkezdésekor ne kelljen újraértelmez
 - az admin oldal és az `/api/admin/**` jellegű végpontok hitelesítést igényelnek
 - hibás bejelentkezés nem hozhat létre hitelesített állapotot
 - a hibaüzenet ne árulja el, hogy a felhasználónév vagy a jelszó volt hibás
-- kijelentkezés után a korábbi hitelesített állapot a választott technikai megoldás szabályai szerint érvénytelenítendő
+- kijelentkezés után a szerveroldali session érvénytelenítendő, a session cookie pedig törlendő
 - jelszó egyszerű szövegként nem tárolható
+- a kliensoldali átirányítás vagy menüelrejtés nem helyettesíti a backend jogosultság-ellenőrzését
 
-## Tervezett API-k
+## Véglegesített API-szerződés
 
+- `GET /api/auth/csrf`
+  - publikus előkészítő végpont;
+  - `200 OK` válaszban adja vissza a módosító kérésekhez szükséges CSRF-token adatait.
 - `POST /api/auth/login`
+  - felhasználónév/e-mail és jelszó fogadása JSON kérésben;
+  - siker esetén `200 OK`, minimális adminazonosító válasz és szerveroldali session;
+  - hibás hitelesítés esetén `401 Unauthorized`, általános `AUTHENTICATION_FAILED` hibakód és felhasználónév-/jelszóhibát nem megkülönböztető üzenet.
+- `GET /api/auth/me`
+  - hitelesített session esetén `200 OK` és a minimális adminazonosító;
+  - hitelesítés nélkül `401 Unauthorized`.
 - `POST /api/auth/logout`
-- opcionálisan: `GET /api/auth/me`
+  - hitelesített, CSRF-védett kérés;
+  - siker esetén a session érvénytelenítése, a session cookie törlése és `204 No Content`.
 
-A végleges API-szerződés az implementáció indulásakor rögzítendő.
+Az API JSON-válaszokat ad, és hitelesítési hiba esetén nem végez HTML-oldalra irányítást. A `/api/admin/**` végpontok hitelesítés nélkül `401 Unauthorized`, hitelesített, de nem engedélyezett hozzáférésnél `403 Forbidden` választ adnak.
 
 ## Technikai specifikáció és megjegyzések
 
@@ -91,6 +102,7 @@ Tervezett backend komponensek:
 - `AuthController`
 - `AuthService`
 - `AdminUserRepository`
+- `AdminUserDetailsService`
 - globális biztonsági/exception kezelés
 
 ## Nyomonkövethetőség
@@ -100,10 +112,11 @@ Tervezett backend komponensek:
   - `BR-FNC-0002`
 - US:
   - `US-0001`
-- későbbi TC:
+- kapcsolódó TC:
   - `TC-AUT-0001`
   - `TC-AUT-0002`
-  - `TC-API-0001`
+  - `TC-AUT-0003`
+  - `TC-SEC-0003`
 
 ## Acceptance Criteria
 
@@ -118,7 +131,7 @@ Tervezett backend komponensek:
   - bejelentkezési kérést küld
 - Akkor:
   - a rendszer sikeresen hitelesíti
-  - létrejön a választott technikai megoldás szerinti hitelesített állapot
+  - létrejön az érvényes szerveroldali munkamenet
   - a védett admin erőforrások elérhetővé válnak
 
 ### AC-FR-AUT-0001-02 – Hitelesítés nélküli admin hozzáférés tiltása

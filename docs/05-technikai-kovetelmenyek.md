@@ -725,26 +725,35 @@ A Spring Security natívan illeszkedik a Spring Boot alkalmazáshoz, és megfele
 - request authorizationhöz
 - security tesztekhez
 
-## Nyitott döntés
+## Lezárt döntés – admin hitelesítési modell
 
-A pontos admin authentikáció:
-- HTTP session/cookie
-vagy
-- token/JWT
+Az admin hitelesítés szerveroldali HTTP sessiont és böngészőoldali session cookie-t használ. A döntés alapja a megvalósított deployment topológia: az Astro frontend és a Spring Boot API ugyanazon Caddy belépési pont és origin mögött érhető el. Ebben a modellben a böngészőnek nem kell hosszú élettartamú access tokent tárolnia vagy megújítania.
 
-A projekt jelenlegi állapotában **nincs véglegesítve**.
+A session cookie kötelező tulajdonságai:
+- `HttpOnly`;
+- productionben `Secure`;
+- `SameSite=Lax`;
+- `Path=/`;
+- explicit `Domain` attribútum nélkül.
 
-A választást a tényleges deployment topológia és frontend-backend kommunikáció alapján kell lezárni, nem pusztán trend alapján.
+A munkamenet inaktivitási időkorlátja kezdetben 30 perc. Sikeres hitelesítéskor session fixation elleni sessionazonosító-csere történik. A session kezdetben az egyetlen backendpéldány memóriájában tárolható; backend-újraindítás után az adminnak ismét be kell jelentkeznie. Több backendpéldány vagy tartós sessiontárolás külön későbbi architekturális döntés.
+
+A cookie-alapú hitelesítés miatt a módosító kéréseken, beleértve a login és logout műveletet, CSRF-védelem kötelező. A frontend publikus `GET /api/auth/csrf` végponton kér CSRF-tokent, majd azt a backend által meghatározott fejlécben küldi vissza. A same-origin topológia miatt általános vagy wildcard CORS-engedélyezés nem szükséges.
 
 ## Kockázatok és limitációk
 
-- hibás CORS/cookie/token konfiguráció security hibát okozhat
+- hibás cookie- vagy CSRF-konfiguráció security hibát okozhat
+- a `Secure` cookie teljes production ellenőrzéséhez HTTPS szükséges; HTTP-alapú SSH-alagút nem bizonyítja a végleges cookie-viselkedést
+- az in-memory session backend-újraindításkor elveszik, ezért az adminnak újra be kell jelentkeznie
 - share token nem helyettesíti az admin authentikációt
 
 ## Alternatívák
 
 - A1: saját kézi security middleware  
   Nem választottuk, mert a Spring Security kiforrottabb és tesztelhetőbb.
+
+- A2: böngészőben tárolt JWT
+  Nem választottuk, mert a jelenlegi same-origin, egyetlen backendpéldányos topológiában indokolatlan tokenéletciklus- és kliensoldali tárolási komplexitást okozna. Későbbi külső API- vagy mobilkliens-igény esetén újraértékelhető.
 
 ## Architektúra kapcsolat
 
@@ -756,21 +765,28 @@ A választást a tényleges deployment topológia és frontend-backend kommunik�
 ## Technikai specifikáció és megjegyzések
 
 Kötelező:
-- biztonságos password encoder
+- `DelegatingPasswordEncoder` alapú, verziójelölt biztonságos jelszóhash
 - backend authorization
 - publikus és admin endpoint szétválasztás
+- default-deny jellegű `/api/admin/**` védelem
+- CSRF-védelem minden sessionalapú módosító kéréshez
+- hitelesítési hibánál JSON `401`, jogosultsági hibánál JSON `403`, HTML redirect nélkül
+- session invalidálás és cookie-törlés logoutkor
+- jelszó, hash és credential nélküli biztonsági naplózás
 - production HTTPS
 
 ## Tesztelhetőség és verifikáció
 
 - security MockMvc teszt
 - hitelesítés nélküli admin hívás tiltott
+- sikeres és hibás login teszt
+- CSRF-token nélküli módosító kérés tiltott
 - share token más galériához nem ad hozzáférést
 - logout/auth expiry teszt
 
 ## Nyomonkövethetőség
 
-- BR: `BR-FNC-0002`
+- BR: `BR-FNC-0001`, `BR-FNC-0002`
 - NFR: `NFR-SEC-0001`, `NFR-SEC-0002`
 - FR: `FR-AUT-0001`, `FR-SHR-0002`, `FR-DWN-0001`
 
@@ -1446,7 +1462,6 @@ docs/
 
 ## Még nyitott
 
-- admin auth: session vagy JWT
 - végleges `vmbr2` IP-címzés
 - Playwright bevezetési pontja
 - média preview generáló könyvtár/technológia

@@ -2,6 +2,17 @@ spring:
   application:
     name: btphoto-backend
 
+server:
+  servlet:
+    session:
+      timeout: 30m
+      tracking-modes:
+        - cookie
+      cookie:
+        name: BTPHOTO_SESSION
+        http-only: true
+        same-site: lax
+
 management:
   endpoint:
     health:

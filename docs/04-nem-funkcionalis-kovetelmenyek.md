@@ -331,8 +331,9 @@ A hozzáférés ellenőrzése minden esetben backend oldalon történik. A front
 
 ## Jelenlegi állapot
 
-- alkalmazásszintű security még nincs implementálva
-- a rendszerterv már rögzíti, hogy csak a webes belépési pont publikálható
+- az admin session-hitelesítés és az `/api/admin/**` backend oldali védelme implementált
+- a privát ügyfélgaléria share-token alapú védelme későbbi fejlesztési checkpoint
+- a rendszerterv rögzíti, hogy csak a webes belépési pont publikálható
 
 ## Mérési módszer
 
@@ -1151,16 +1152,14 @@ Ez azért fontos, mert az első működő feature már ne csak funkcionálisan m
 
 A következő pontokat a `05-technikai-kovetelmenyek.md` kidolgozásakor kell véglegesíteni:
 
-1. admin auth session vagy JWT/token alapú legyen-e
-2. pontos jelszóhash-algoritmus és security policy
-3. CockroachDB TLS mikortól kötelező
-4. self-hosted runner jogosultsági modellje
-5. production secret tárolás pontos módja
-6. preview generálás technológiája
-7. média streamelést a backend vagy reverse proxy optimalizálja-e
-8. pontos teljesítményteszt-eszköz
-9. pontos logformátum
-10. external/offsite backup cél
+1. CockroachDB TLS mikortól kötelező
+2. self-hosted runner jogosultsági modellje
+3. production secret tárolás pontos módja
+4. preview generálás technológiája
+5. média streamelést a backend vagy reverse proxy optimalizálja-e
+6. pontos teljesítményteszt-eszköz
+7. pontos logformátum
+8. external/offsite backup cél
 
 ---
 

@@ -458,6 +458,24 @@ Feladata:
 
 ## 11. Fő request flow-k
 
+### Admin bejelentkezés és munkamenet
+
+```text
+Admin böngésző
+  ↓ GET /api/auth/csrf
+Caddy / same-origin belépési pont
+  ↓ POST /api/auth/login + CSRF-token
+Spring Security
+  ↓
+AdminUserRepository ── JDBC, verify-full ── CockroachDB
+  ↓
+szerveroldali HTTP session + HttpOnly/Secure/SameSite=Lax cookie
+  ↓ GET /api/auth/me vagy /api/admin/**
+backend oldali jogosultság-ellenőrzés
+```
+
+A frontend nem tárol access tokent. A kliensoldali route-ellenőrzés és átirányítás csak felhasználói élményt biztosít; a védett adatok kiadásáról minden kérésnél a backend dönt. Hitelesítés nélkül az admin API JSON `401`, elégtelen jogosultságnál JSON `403` választ ad, HTML-átirányítás nélkül.
+
 ### Médiafeltöltés
 
 ```text
@@ -650,8 +668,12 @@ Közvetlenül nem publikálható:
 
 MVP biztonsági elvárások:
 - HTTPS
-- admin hitelesítés
-- jelszóhash
+- szerveroldali HTTP sessionre épülő admin hitelesítés
+- `HttpOnly`, productionben `Secure`, `SameSite=Lax` session cookie
+- session fixation elleni sessionazonosító-csere
+- CSRF-védelem a sessionalapú módosító kéréseken
+- `DelegatingPasswordEncoder` alapú, verziójelölt jelszóhash
+- `/api/admin/**` backend oldali default-deny védelem
 - secret-ek repository-n kívül
 - kiszámíthatatlan share token
 - path traversal elleni védelem
