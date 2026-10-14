@@ -50,6 +50,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   background: var(--ground);
   color-scheme: light;
@@ -1173,6 +1177,259 @@ html:not(.motion-enhanced) .hero__wave {
 .feedback-state--empty .feedback-state__marker { color: var(--slate); }
 .feedback-state--error .feedback-state__marker { color: var(--error); }
 
+.auth-shell,
+.admin-shell {
+  width: min(100%, 1920px);
+  min-height: 100vh;
+  margin-inline: auto;
+  border-inline: 1px solid var(--rule);
+}
+
+.auth-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  min-height: 84px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4vw;
+  border-bottom: 1px solid var(--rule-strong);
+  background: color-mix(in srgb, var(--ground) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.auth-main {
+  display: grid;
+  min-height: calc(100vh - 84px);
+  grid-template-columns: minmax(0, 7fr) minmax(420px, 5fr);
+}
+
+.auth-context {
+  position: relative;
+  display: grid;
+  min-height: 680px;
+  place-items: end start;
+  overflow: hidden;
+  padding: clamp(3rem, 7vw, 7rem);
+  border-right: 1px solid var(--rule-strong);
+  background:
+    linear-gradient(90deg, transparent 0 66.6%, var(--rule) 66.7%, transparent 66.8%),
+    linear-gradient(0deg, transparent 0 33.2%, var(--rule) 33.3%, transparent 33.4%);
+}
+
+.auth-context::before {
+  position: absolute;
+  inset: -25% -15% 15% -30%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    ellipse at 50% 50%,
+    transparent 0 19px,
+    var(--rule) 20px 21px,
+    transparent 22px 39px
+  );
+  content: "";
+  opacity: 0.86;
+  transform: rotate(-9deg) scaleY(0.56);
+  mask-image: linear-gradient(125deg, black 20%, transparent 78%);
+  pointer-events: none;
+}
+
+.auth-context__content {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+}
+
+.auth-context h2 {
+  max-width: 10ch;
+  margin: 2rem 0;
+  font-family: "Archivo Variable", sans-serif;
+  font-size: clamp(3.4rem, 7vw, 8rem);
+  font-stretch: condensed;
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 0.86;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1400px) {
+  .auth-context h2 {
+    font-size: clamp(3.2rem, 5vw, 4rem);
+  }
+}
+
+.auth-context__content > p:last-child {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--slate);
+}
+
+.auth-panel {
+  display: grid;
+  align-items: center;
+  padding: clamp(2rem, 6vw, 6rem);
+  background: color-mix(in srgb, var(--panel) 42%, transparent);
+}
+
+.auth-card {
+  width: min(100%, 520px);
+  margin-inline: auto;
+  border: 1px solid var(--rule-strong);
+  background: var(--panel);
+  box-shadow: 0 28px 80px rgb(0 0 0 / 9%);
+}
+
+.auth-card__header {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.auth-card__header h1 {
+  margin: 1.2rem 0 0;
+  font-family: "Archivo Variable", sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  font-stretch: condensed;
+  font-weight: 680;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+}
+
+.auth-card__header > p:last-child {
+  margin: 1.2rem 0 0;
+  color: var(--slate);
+}
+
+.auth-form {
+  display: grid;
+  gap: 1.35rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.auth-form .ui-button {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.auth-form__status {
+  min-height: 1.5rem;
+  margin: 0;
+  color: var(--slate);
+  font-size: 0.82rem;
+}
+
+.auth-form__status[data-tone="error"] {
+  color: var(--error);
+}
+
+.auth-form__status[data-tone="success"] {
+  color: var(--success);
+}
+
+.admin-main {
+  min-height: calc(100vh - 84px);
+  padding: clamp(2rem, 5vw, 5rem);
+  background:
+    linear-gradient(90deg, transparent 0 49.94%, var(--rule) 50%, transparent 50.06%),
+    var(--ground);
+}
+
+.admin-state {
+  width: min(100%, 860px);
+  margin: clamp(3rem, 10vh, 8rem) auto;
+}
+
+.admin-state .ui-button {
+  margin-top: 1.25rem;
+}
+
+.admin-dashboard {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+.admin-dashboard__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.admin-dashboard__header h1 {
+  margin: 1rem 0 0;
+  font-family: "Archivo Variable", sans-serif;
+  font-size: clamp(3.2rem, 7vw, 7rem);
+  font-stretch: condensed;
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.admin-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  color: var(--slate);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+}
+
+.admin-identity strong {
+  color: var(--ink);
+}
+
+.admin-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-right: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
+  border-left: 1px solid var(--rule-strong);
+}
+
+.admin-placeholder {
+  min-height: 310px;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  background: var(--panel);
+}
+
+.admin-placeholder + .admin-placeholder {
+  border-left: 1px solid var(--rule-strong);
+}
+
+.admin-placeholder--muted {
+  background: color-mix(in srgb, var(--panel-2) 72%, transparent);
+}
+
+.admin-placeholder h2 {
+  max-width: 12ch;
+  margin: 2rem 0 1rem;
+  font-family: "Archivo Variable", sans-serif;
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-stretch: condensed;
+  font-weight: 650;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.admin-placeholder > p:last-child {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--slate);
+}
+
+.admin-session-status {
+  min-height: 1.5rem;
+  margin: 1rem 0 0;
+  color: var(--error);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(22px);
@@ -1261,6 +1518,16 @@ html:not(.motion-enhanced) .hero__wave {
     border-right: 0;
     border-bottom: 1px solid var(--rule-strong);
   }
+
+  .auth-main {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-context {
+    min-height: 520px;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule-strong);
+  }
 }
 
 @media (max-width: 720px) {
@@ -1272,6 +1539,51 @@ html:not(.motion-enhanced) .hero__wave {
     min-height: 72px;
     padding-right: 0;
     padding-left: 1.2rem;
+  }
+
+  .auth-header {
+    min-height: 72px;
+    padding-right: 0;
+    padding-left: 1.2rem;
+  }
+
+  .auth-main,
+  .admin-main {
+    min-height: calc(100vh - 72px);
+  }
+
+  .auth-context {
+    min-height: 420px;
+    padding: 4rem 1.2rem 2.5rem;
+  }
+
+  .auth-context h2 {
+    overflow-wrap: anywhere;
+    font-size: clamp(2.5rem, 13vw, 3.6rem);
+  }
+
+  .auth-panel,
+  .admin-main {
+    padding: 1.2rem;
+  }
+
+  .admin-dashboard__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-identity {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .admin-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-placeholder + .admin-placeholder {
+    border-top: 1px solid var(--rule-strong);
+    border-left: 0;
   }
 
   .build-label,

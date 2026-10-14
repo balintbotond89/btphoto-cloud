@@ -7,6 +7,7 @@ type Props = {
   disabled?: boolean
   class?: string
   ariaLabel?: string
+  dataAction?: string
 }
 
 const {
@@ -17,6 +18,7 @@ const {
   disabled = false,
   class: className = "",
   ariaLabel,
+  dataAction,
 } = Astro.props
 
 const classes = ["ui-button", `ui-button--${variant}`, `ui-button--${size}`, className]
@@ -34,6 +36,7 @@ const buttonVariant = variant === "solid" ? "filled" : variant === "outline" ? "
       aria-disabled={disabled || undefined}
       tabindex={disabled ? -1 : undefined}
       data-button-variant={buttonVariant}
+      data-action={dataAction}
     >
       <slot />
     </a>
@@ -44,6 +47,7 @@ const buttonVariant = variant === "solid" ? "filled" : variant === "outline" ? "
       disabled={disabled}
       aria-label={ariaLabel}
       data-button-variant={buttonVariant}
+      data-action={dataAction}
     >
       <slot />
     </button>

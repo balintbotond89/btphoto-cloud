@@ -1,0 +1,43 @@
+---
+import LoginForm from "@/components/auth/LoginForm.astro"
+import ThemeToggle from "@/components/ThemeToggle.astro"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="Admin bejelentkezés | BTPhoto Private Cloud"
+  description="Biztonságos adminisztrátori bejelentkezés a BTPhoto Private Cloud rendszerbe."
+>
+  <div class="auth-shell">
+    <header class="auth-header">
+      <a class="wordmark" href="/" aria-label="BTPhoto Private Cloud kezdőlap">
+        <span class="wordmark__mark" aria-hidden="true"></span>
+        <span>
+          <strong>BTPHOTO</strong>
+          <small>PRIVATE CLOUD</small>
+        </span>
+      </a>
+      <div class="site-header__actions">
+        <span class="build-label">VÉDETT MUNKATERÜLET</span>
+        <ThemeToggle />
+      </div>
+    </header>
+
+    <main id="fo-tartalom" class="auth-main">
+      <section class="auth-context" aria-labelledby="auth-context-title">
+        <div class="auth-context__content">
+          <p class="technical-label">BTPHOTO / PRIVATE WORKFLOW</p>
+          <h2 id="auth-context-title">Kontrollált hozzáférés.<br />Saját infrastruktúra.</h2>
+          <p>
+            A munkamenetet a backend hozza létre és ellenőrzi. Az alkalmazás a jelszót és a
+            CSRF tokent nem menti kliensoldali tárolóba.
+          </p>
+        </div>
+      </section>
+
+      <div class="auth-panel">
+        <LoginForm />
+      </div>
+    </main>
+  </div>
+</BaseLayout>
