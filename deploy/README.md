@@ -1,5 +1,14 @@
 # Production deployment
 
+## CR-0002 – staging és CD implementáció
+
+A jóváhagyott környezetszétválasztás és az új, fix root CD-motor dokumentációja:
+[deploy/cd/README.md](cd/README.md). Ez a legacy controlled-deploy.sh helyett
+külön, előre telepítendő belépési pontot használ; a régi script nem vált
+hallgatólagosan ismételt deployra alkalmassá. Az első production átvétel,
+runner-hardening, GitHub approval, staging DB/NFS és DNS/TLS továbbra is külön
+valós élesítési kapu. A jelenlegi éles stack nem lett átállítva.
+
 ## UI-01 CAPTCHA kiadási feltétel
 
 Bekapcsolt regisztrációhoz a védett envben kötelező a BTPHOTO_RECAPTCHA_SITE_KEY,

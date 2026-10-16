@@ -1,0 +1,4 @@
+# Visudo ellenőrzés és külön szolgáltatásfelhasználók szükségesek.
+# Az üres argumentumlista kötelező; ALL vagy shell/parancsparaméter nem engedhető.
+btphoto-deploy-staging ALL=(root) NOPASSWD: /usr/local/sbin/btphoto-cd ""
+btphoto-deploy-production ALL=(root) NOPASSWD: /usr/local/sbin/btphoto-cd ""

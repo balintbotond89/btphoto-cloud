@@ -1,0 +1,60 @@
+name: btphoto-edge
+
+services:
+  edge:
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    user: "65534:65534"
+    env_file:
+      - path: /etc/btphoto-cd/.env.edge
+        format: raw
+    environment:
+      XDG_CONFIG_HOME: /config
+      XDG_DATA_HOME: /data
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - type: bind
+        source: /etc/btphoto-cd/edge.Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/lib/btphoto-edge/data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/lib/btphoto-edge/config
+        target: /config
+        bind:
+          create_host_path: false
+    networks:
+      internet: {}
+      production:
+        ipv4_address: 172.30.10.2
+      staging:
+        ipv4_address: 172.30.11.2
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    restart: unless-stopped
+
+networks:
+  internet: {}
+  production:
+    external: true
+    name: btphoto-ingress-production
+  staging:
+    external: true
+    name: btphoto-ingress-staging

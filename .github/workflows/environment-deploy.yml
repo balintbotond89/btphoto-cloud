@@ -1,0 +1,111 @@
+name: Protected environment deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      release_sha:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+      quality_run_id:
+        required: true
+        type: number
+      digests:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+
+concurrency:
+  group: btphoto-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  environment-check:
+    name: Environment kapu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Environment előzetes ellenőrzése, runner és secret nélkül
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_BRANCH: ${{ inputs.branch }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          environment = os.environ['TARGET_ENVIRONMENT']
+          assert environment in ('staging', 'production')
+          assert re.fullmatch('[0-9a-f]{40}', os.environ['RELEASE_SHA'])
+          assert os.environ['RELEASE_BRANCH'] in ('main', 'staging')
+          assert environment != 'production' or os.environ['RELEASE_BRANCH'] == 'main'
+          prefix = 'repos/balintbotond89/btphoto-cloud/environments/' + environment
+          def get(path):
+              return json.loads(subprocess.check_output(['gh', 'api', path]))
+          config = get(prefix)
+          assert config['deployment_branch_policy'] == {'protected_branches': False, 'custom_branch_policies': True}
+          rules = get(prefix + '/deployment-branch-policies')['branch_policies']
+          assert len(rules) == 1 and rules[0]['name'] == 'main' and rules[0].get('type', 'branch') == 'branch'
+          if environment == 'production':
+              assert any(r['type'] == 'required_reviewers' and r.get('reviewers') for r in config['protection_rules'])
+          PY
+
+  deploy:
+    name: Deploy ${{ inputs.environment }}
+    needs: environment-check
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - btphoto-deploy-${{ inputs.environment }}
+    timeout-minutes: 25
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment == 'production' && 'https://btphoto.hu' || 'https://staging.btphoto.hu' }}
+    steps:
+      # Nincs checkout, artifactfuttatás, docker socket vagy általános sudo.
+      - name: Aláírt, szűk telepítési kérés
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_BRANCH: ${{ inputs.branch }}
+          QUALITY_RUN_ID: ${{ inputs.quality_run_id }}
+          RELEASE_DIGESTS: ${{ inputs.digests }}
+          DEPLOY_REQUEST_KEY: ${{ secrets.DEPLOY_REQUEST_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MIGRATIONS_PASSWORD: ${{ secrets.MIGRATIONS_PASSWORD }}
+          BTPHOTO_REGISTRATION_ENABLED: ${{ vars.BTPHOTO_REGISTRATION_ENABLED || 'false' }}
+          BTPHOTO_RECAPTCHA_SITE_KEY: ${{ vars.BTPHOTO_RECAPTCHA_SITE_KEY }}
+          BTPHOTO_RECAPTCHA_SECRET: ${{ secrets.BTPHOTO_RECAPTCHA_SECRET }}
+          BTPHOTO_RECAPTCHA_HOSTNAMES: ${{ vars.BTPHOTO_RECAPTCHA_HOSTNAMES }}
+        run: |
+          python3 -I - <<'PY'
+          import hashlib, hmac, json, os, re, subprocess, sys, time
+          key = os.environ['DEPLOY_REQUEST_KEY']
+          if not re.fullmatch('[0-9a-f]{64}', key):
+              sys.exit('Hiányzó vagy hibás deploy kéréskulcs.')
+          credentials = {k: os.environ[k] for k in (
+              'DB_PASSWORD', 'MIGRATIONS_PASSWORD', 'BTPHOTO_REGISTRATION_ENABLED',
+              'BTPHOTO_RECAPTCHA_SITE_KEY', 'BTPHOTO_RECAPTCHA_SECRET', 'BTPHOTO_RECAPTCHA_HOSTNAMES')}
+          body = {'version': 1, 'environment': os.environ['TARGET_ENVIRONMENT'],
+                  'sha': os.environ['RELEASE_SHA'], 'branch': os.environ['RELEASE_BRANCH'],
+                  'quality_run_id': int(os.environ['QUALITY_RUN_ID']), 'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']), 'issued_at': int(time.time()),
+                  'digests': json.loads(os.environ['RELEASE_DIGESTS']), 'credentials': credentials}
+          encoded = json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()
+          envelope = {'body': body, 'signature': hmac.new(bytes.fromhex(key), encoded, hashlib.sha256).hexdigest(),
+                      'github_token': os.environ['GH_TOKEN']}
+          result = subprocess.run(['sudo', '-n', '/usr/local/sbin/btphoto-cd'],
+                                  input=json.dumps(envelope).encode(), check=False,
+                                  env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
+          sys.exit(result.returncode)
+          PY

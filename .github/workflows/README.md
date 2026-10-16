@@ -16,13 +16,15 @@ a tesztek nem használhatják a production sql01 adatbázist.
 
 Helyben ezek hiányzó fixture esetén kihagyottak, nem sikeres DB-bizonyítékok.
 A GitHub-hosted futás a commit/push utáni PR-gate; ebben az implementációs munkában még nem futott.
-Az action-SHA-k és a három image közös SHA-szerződése megmaradnak.
+Az action-SHA-k és a három image közös SHA-szerződése megmaradnak. A CR-0002
+kibővíti a triggert és a kiadási láncot staging/main irányban; ennek normatív
+forrása a docs/CR-0002-staging-cd.md és a deploy/cd/README.md.
 
 ## Quality CI
 
 A `quality-ci.yml` a backend és frontend automatizált minőségkapuja. A workflow
-GitHub-hosted Ubuntu runneren, `contents: read` jogosultsággal fut a `main` ágra
-irányuló pull requesteknél, valamint a `main` és `feature/**` ágak push
+GitHub-hosted Ubuntu runneren, `contents: read` jogosultsággal fut a `main`/`staging` ágra
+irányuló pull requesteknél, valamint a `main`, `staging` és `feature/**` ágak push
 eseményeinél.
 
 A backend job Java 21 alatt futtatja a Maven Wrapper `clean verify` folyamatát.
@@ -31,8 +33,10 @@ production build és dependency audit lépéseket.
 
 ## Production Image Build
 
-A `production-image-build.yml` minden esetben GitHub-hosted runneren fut, és
-két elkülönített működési módja van.
+A `production-image-build.yml` build-, contract- és image-publikáló jobjai
+GitHub-hosted runneren futnak. Az engedélyezett CD a külön environment-deploy.yml
+újrafelhasználható workflow-n keresztül megbízható self-hosted deploy jobot hív;
+PR esemény nem indítja ezt az ágat.
 
 Pull request esetén:
 
@@ -70,9 +74,9 @@ A CockroachDB fixture `--insecure` módja kizárólag eldobható CI-kompatibilit
 teszt. Nem használja a production `sql01` adatbázist, és nem helyettesíti a
 production `sslmode=verify-full` TLS smoke tesztet.
 
-Sikeres main Quality CI után:
+Sikeres main/staging push Quality CI után:
 
-- kizárólag a `Quality CI` sikeres, `main` ági `push` futása indíthat
+- kizárólag a `Quality CI` sikeres, `main` vagy `staging` ági `push` futása indíthat
   publikálást;
 - a workflow az upstream futás pontos `head_sha` commitját checkoutolja;
 - csak a publikáló job kap `packages: write` jogosultságot;
@@ -82,6 +86,11 @@ Sikeres main Quality CI után:
 - `latest` tag nem készül;
 - az image OCI `source` és `revision` labelt tartalmaz.
 
+A contract-, image-, runtime- és valódi CockroachDB-kapuk a tényleges kiadási
+head SHA-n is lefutnak; a publikálás csak ezek sikere után indulhat. Mindhárom
+image közös hu.btphoto.schema-sha256 címkét kap a rendezett migrációkból.
+A Kiadási manifest job a tényleges registry digesteket adja a CD-nek.
+
 Publikált image-nevek:
 
 ```text
@@ -90,20 +99,36 @@ ghcr.io/balintbotond89/btphoto-frontend:<teljes-commit-SHA>
 ghcr.io/balintbotond89/btphoto-migrations:<teljes-commit-SHA>
 ```
 
-A workflow nem használ `pull_request_target` eseményt, nem tölt le vagy hajt
-végre upstream artifactot, nem használ self-hosted runnert, és deploymentet sem
-végez. Későbbi hardeningként a Compose deployment a GHCR által visszaadott
-immutable image digestre is rögzíthető a commit-SHA tag feloldása után.
+A workflow nem használ `pull_request_target` eseményt, és nem hajt végre
+upstream artifactot. A deploy SHA+digest rögzített referenciát kap. Az új,
+checkout nélküli CD-job külön Environment secretet és root HMAC/API kaput használ.
+A nyilvános repository runnerkockázata miatt a deploy runner elkülönítése és a
+valódi negatív próba kötelező élesítési előfeltétel, nem a labelből következő védelem.
+A tulajdonos a nyilvános, személyes repository és a kapcsolódó self-hosted runner
+maradványkockázatát 2026-10-15-én elfogadta; külön deploy repository nem készül.
+Ez nem igazolja a PR-kizárást. A részletes döntés és a fennmaradó védelmek a CR-0002-ben szerepelnek.
 
 Az actionök teljes commit SHA-val vannak rögzítve; a kommentek jelzik az
 ellenőrzött stabil release-verziót.
 
-## Későbbi workflow-k
+## Staging és production CD
 
-A következő, külön scope-ba tartozó lépések:
+Az environment-deploy.yml stagingen automatikus, productionnél required reviewer
+jóváhagyásos jobot definiál. Main kiadás előbb stagingre kerül, így production
+ugyanazt a SHA-t és image-készletet kaphatja. A root motor a staging receiptet
+közvetlenül az aktiválás előtt is ellenőrzi. Nincs új build a promóciónál.
 
-- `production-deploy.yml` jóváhagyott production environmenttel, kontrollált
-  runnerrel, health/smoke ellenőrzéssel és rollback-eljárással.
+A BTPHOTO_CD_ENABLED repository variable és a root policy enabled kapcsolója
+alapértelmezetten tiltott. A 2026-10-16-i operátori bizonyíték szerint a letiltott
+CD-motor települt, a staging DB/userek, ingress hálózat, avataralkönyvtár és staging
+GitHub Environment előkészítése megtörtént. Regisztrált runner és működő staging
+alkalmazásstack még nincs; a CD nem élesített. A repositorybeli YAML önmagában
+nem igazolja az infrastruktúra készültségét. A pontos telepítési/átvételi és elfogadási kapuk:
+[CD runbook](../../deploy/cd/README.md).
+
+A staging SQL-fixture a külön runtime és migrációs usert, a callbackkel adott
+üzleti DML-t, a tiltott runtime DDL/history írást és a kétirányú cross-DB tiltást
+ellenőrzi. Ez kizárólag az eldobható CI-adatbázison fut, nem az sql01-en.
 
 ## UI-01 kiegészítés
 

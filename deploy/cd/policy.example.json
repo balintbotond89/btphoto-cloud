@@ -1,0 +1,4 @@
+{
+  "staging": {"enabled": false, "runner": "btphoto-deploy-staging", "db_host": "10.20.0.20", "db_port": 26257, "rollback_pairs": []},
+  "production": {"enabled": false, "runner": "btphoto-deploy-production", "db_host": "10.20.0.20", "db_port": 26257, "rollback_pairs": []}
+}

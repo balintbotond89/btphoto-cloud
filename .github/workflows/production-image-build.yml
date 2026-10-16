@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - staging
   workflow_run:
     workflows:
       - Quality CI
@@ -15,12 +16,17 @@ permissions:
 
 concurrency:
   group: production-image-build-${{ github.event.pull_request.number || github.event.workflow_run.id || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   deployment-contract-check:
     name: Production deployment contract check
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       contains(fromJSON('["main", "staging"]'), github.event.workflow_run.head_branch) &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,7 +34,14 @@ jobs:
       - name: Repository checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
           persist-credentials: false
+
+      - name: CD protokoll és rollback fixture-ek
+        run: python3 -B -m unittest discover -s deploy/cd/tests -v
+
+      - name: CD Compose és Caddy natív contract
+        run: python3 -B deploy/cd/check_contract.py
 
       - name: Production preflight ellenőrzése
         shell: bash
@@ -218,7 +231,6 @@ jobs:
             fi
           done
 
-
       - name: Gateway Caddyfile natív validálása
         run: |
           docker run --rm --network none --read-only --tmpfs /tmp \
@@ -237,7 +249,12 @@ jobs:
 
   pull-request-image-build:
     name: Pull request image build (${{ matrix.component }})
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       contains(fromJSON('["main", "staging"]'), github.event.workflow_run.head_branch) &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -258,6 +275,7 @@ jobs:
       - name: Repository checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       - name: Temurin Java 21 beállítása a CockroachDB repository-teszthez
@@ -274,6 +292,10 @@ jobs:
       - name: Docker Buildx beállítása
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      - name: Migrációs ujjlenyomat
+        id: schema
+        run: python3 deploy/cd/schema_digest.py >> "$GITHUB_OUTPUT"
+
       - name: Production image ellenőrző build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -282,19 +304,20 @@ jobs:
           push: false
           pull: true
           load: true
-          tags: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha }}
+          tags: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
           build-args: |
             OCI_SOURCE=${{ github.server_url }}/${{ github.repository }}
-            OCI_REVISION=${{ github.event.pull_request.head.sha }}
+            OCI_REVISION=${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+            org.opencontainers.image.revision=${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+            hu.btphoto.schema-sha256=${{ steps.schema.outputs.digest }}
 
       - name: OCI revision címke ellenőrzése
         shell: bash
         env:
-          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha }}
-          RUNTIME_IMAGE: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha }}
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+          RUNTIME_IMAGE: btphoto-${{ matrix.component }}:ci-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           actual_revision=$(docker image inspect \
@@ -306,7 +329,7 @@ jobs:
         if: matrix.component == 'backend'
         shell: bash
         env:
-          RUNTIME_IMAGE: btphoto-backend:ci-${{ github.event.pull_request.head.sha }}
+          RUNTIME_IMAGE: btphoto-backend:ci-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
         run: |
           account_contract=$(docker image inspect --format '{{ index .Config.Labels "hu.btphoto.account-contract" }}' "${RUNTIME_IMAGE}")
           [[ "${account_contract}" == "tenant-v1" ]]
@@ -317,12 +340,11 @@ jobs:
             "${RUNTIME_IMAGE}" -Djava.awt.headless=true \
             -cp /app/healthcheck AvatarCodecProbe
 
-
       - name: Caddy runtime capability regresszió ellenőrzése
         if: matrix.component == 'frontend'
         shell: bash
         env:
-          FRONTEND_RUNTIME_IMAGE: btphoto-frontend:ci-${{ github.event.pull_request.head.sha }}
+          FRONTEND_RUNTIME_IMAGE: btphoto-frontend:ci-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
           GATEWAY_RUNTIME_IMAGE: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
         run: |
           set -Eeuo pipefail
@@ -398,7 +420,7 @@ jobs:
         shell: bash
         env:
           COCKROACH_IMAGE: cockroachdb/cockroach:v26.2.2@sha256:abb56e6757d4a73a7059af2911b684f3e13930423fe7bef49fe395669eb14562
-          MIGRATIONS_IMAGE: btphoto-migrations:ci-${{ github.event.pull_request.head.sha }}
+          MIGRATIONS_IMAGE: btphoto-migrations:ci-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
         run: |
           set -Eeuo pipefail
 
@@ -570,6 +592,9 @@ jobs:
             ./backend/mvnw -B -ntp -f backend/pom.xml \
               -Dtest=AdminUserRepositoryCockroachTest,AccountRepositoryCockroachTest test
 
+          BTPHOTO_TEST_FIXTURE=ephemeral-cockroach26 \
+            bash deploy/cd/test-database-isolation.sh "${database_container}" "${MIGRATIONS_IMAGE}" "${network}"
+
           if run_migration "${migration_invalid}" \
             'jdbc:postgresql://missing-cockroach.invalid:26257/btphoto?sslmode=disable'; then
             echo '::error::A migrations image hibás kapcsolati adatokkal is sikeres lett.'
@@ -635,12 +660,13 @@ jobs:
           fi
 
   publish-main-images:
-    name: Publish main image (${{ matrix.component }})
+    name: Publish release image (${{ matrix.component }})
+    needs: [deployment-contract-check, pull-request-image-build]
     if: >-
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main' &&
+      contains(fromJSON('["main", "staging"]'), github.event.workflow_run.head_branch) &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
@@ -679,6 +705,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      - name: Migrációs ujjlenyomat
+        id: schema
+        run: python3 deploy/cd/schema_digest.py >> "$GITHUB_OUTPUT"
+
       - name: Production image build és publikálás
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -693,3 +723,78 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
+            hu.btphoto.schema-sha256=${{ steps.schema.outputs.digest }}
+
+  release-manifest:
+    name: Kiadási manifest
+    needs: publish-main-images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      digests: ${{ steps.manifest.outputs.digests }}
+    steps:
+      - name: Release origin ${{ github.event.workflow_run.id }} ${{ github.event.workflow_run.head_branch }} ${{ github.event.workflow_run.head_sha }}
+        run: "true"
+      - name: Bejelentkezés a GHCR-be csak olvasásra
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: A három publikált digest rögzítése
+        id: manifest
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          sha = os.environ['RELEASE_SHA']
+          assert re.fullmatch('[0-9a-f]{40}', sha)
+          digests = {}
+          for component in ('backend', 'frontend', 'migrations'):
+              image = f'ghcr.io/balintbotond89/btphoto-{component}:{sha}'
+              output = subprocess.check_output(['docker', 'buildx', 'imagetools', 'inspect', image,
+                                                '--format', '{{json .Manifest}}'])
+              digest = json.loads(output)['digest']
+              assert re.fullmatch('sha256:[0-9a-f]{64}', digest)
+              digests[component] = digest
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('digests=' + json.dumps(digests, separators=(',', ':')) + '\n')
+          PY
+
+  deploy-staging:
+    name: Staging kiadás
+    needs: release-manifest
+    if: vars.BTPHOTO_CD_ENABLED == 'true'
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    uses: ./.github/workflows/environment-deploy.yml
+    with:
+      environment: staging
+      release_sha: ${{ github.event.workflow_run.head_sha }}
+      branch: ${{ github.event.workflow_run.head_branch }}
+      quality_run_id: ${{ github.event.workflow_run.id }}
+      digests: ${{ needs.release-manifest.outputs.digests }}
+    secrets: inherit
+
+  deploy-production:
+    name: Production kiadás
+    needs: [release-manifest, deploy-staging]
+    if: vars.BTPHOTO_CD_ENABLED == 'true' && github.event.workflow_run.head_branch == 'main'
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    uses: ./.github/workflows/environment-deploy.yml
+    with:
+      environment: production
+      release_sha: ${{ github.event.workflow_run.head_sha }}
+      branch: main
+      quality_run_id: ${{ github.event.workflow_run.id }}
+      digests: ${{ needs.release-manifest.outputs.digests }}
+    secrets: inherit
