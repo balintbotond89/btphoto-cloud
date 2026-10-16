@@ -187,6 +187,33 @@ require(
     "a migrations CA utvonala nem rogzitett",
 )
 require(environment.get("FLYWAY_LOCATIONS") == "filesystem:/flyway/sql", "a migrations location elter")
+
+backend_environment = backend.get("environment") or {}
+require(backend_environment.get("BTPHOTO_REGISTRATION_ENABLED") in ("true", "false"),
+        "a regisztracios gate csak true vagy false lehet")
+if backend_environment.get("BTPHOTO_REGISTRATION_ENABLED") == "true":
+    for key in ("BTPHOTO_RECAPTCHA_SITE_KEY", "BTPHOTO_RECAPTCHA_SECRET", "BTPHOTO_RECAPTCHA_HOSTNAMES"):
+        require(isinstance(backend_environment.get(key), str) and backend_environment[key].strip(),
+                "az engedelyezett regisztracio CAPTCHA-konfiguracioja hianyos")
+require(backend_environment.get("BTPHOTO_TRUSTED_GATEWAY") == "caddy",
+        "a backend csak a caddy halozati identitasat bizhatja meg")
+require(backend_environment.get("BTPHOTO_AVATAR_ROOT") == "/srv/btphoto/avatars",
+        "az avatar kontenerutvonala elter")
+backend_mounts = backend.get("volumes") or []
+require(len(backend_mounts) == 2, "a backend pontosan CA es avatar bind mountot kaphat")
+by_target = {mount.get("target"): mount for mount in backend_mounts}
+require(set(by_target) == {"/run/secrets/btphoto/cockroach-ca.crt", "/srv/btphoto/avatars"},
+        "a backend mount celutvonalai elternek")
+backend_ca = by_target["/run/secrets/btphoto/cockroach-ca.crt"]
+require(backend_ca.get("type") == "bind" and backend_ca.get("source") == "/etc/btphoto/certs/ca.crt"
+        and backend_ca.get("read_only") is True, "a backend CA mountja nem read-only vagy elter")
+avatar = by_target["/srv/btphoto/avatars"]
+require(avatar.get("type") == "bind" and avatar.get("source") == "/srv/btphoto/media/avatars"
+        and not avatar.get("read_only"), "az avatar mount nem a rogzitett irhato NFS-alkonyvtar")
+require((avatar.get("bind") or {}).get("create_host_path") is False,
+        "az avatar hostkonyvtarat Docker nem hozhatja letre automatikusan")
+require(backend.get("read_only") is True and backend.get("cap_drop") == ["ALL"]
+        and not backend.get("cap_add"), "a backend runtime vedelme elter")
 PY
 then
     fail "a production Compose biztonsagi szerzodese ervenytelen"

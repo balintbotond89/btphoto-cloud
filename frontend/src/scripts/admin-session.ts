@@ -4,6 +4,8 @@ import {
   getCurrentAdmin,
   type AuthenticatedAdmin,
 } from "@/api/auth"
+import { renderIdentity } from "@/scripts/account-identity"
+import { installProtectedHistory } from "@/scripts/protected-history"
 
 type AdminSessionDependencies = {
   loadAdmin: (signal?: AbortSignal) => Promise<AuthenticatedAdmin>
@@ -60,9 +62,15 @@ async function refreshAdminSession(
 
   try {
     const admin = await dependencies.loadAdmin(signal)
+    if (admin.role !== "ADMIN") {
+      dependencies.navigate("/workspace/")
+      return
+    }
+    renderIdentity(admin)
     elements.username.textContent = admin.username
     elements.loading.hidden = true
     elements.content.hidden = false
+    root.dispatchEvent(new CustomEvent("btphoto:account", { detail: admin }))
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return
@@ -111,6 +119,7 @@ function mountAdminSession(
   dependencies: AdminSessionDependencies = defaultDependencies,
 ) {
   const elements = getAdminSessionElements(root)
+  const historyCleanup = installProtectedHistory(root)
   let controller = new AbortController()
 
   const refresh = () => {
@@ -130,6 +139,7 @@ function mountAdminSession(
 
   return () => {
     controller.abort()
+    historyCleanup()
     elements.retry.removeEventListener("click", refresh)
     elements.logout.removeEventListener("click", handleLogout)
   }

@@ -2,11 +2,11 @@
 
 Saját infrastruktúrán futó, fotós munkafolyamatokra specializált privát felhő és ügyfélgaléria.
 
-**Fejlesztési baseline:** `BTPC-BL-2026-10-11-v0.3`
+**Fejlesztési baseline:** `BTPC-BL-2026-10-14-v0.4`
 
 ## Projektcél
 
-A rendszer egy fotós számára egységes folyamatba szervezi:
+A rendszer több fotós egymástól elkülönített munkaterületén szervezi egységes folyamatba:
 
 - ügyfelek kezelését;
 - galériák létrehozását;
@@ -202,14 +202,21 @@ A Codex:
 
 ## Következő fázis
 
-1. A három production image és a CockroachDB 26.2.2 migrációs integrációs teszt PR-workflow ellenőrzése.
-2. A kontrollált `docker01` deployment production `verify-full` TLS smoke tesztje.
-3. A teljes frontend → backend → CockroachDB walking skeleton lezárása.
-4. NFS media integráció.
-5. Első vertikális feature.
+Az aktuális ciklus a CR-0001: fotósregisztráció, egyetlen üzemeltetői admin,
+jóváhagyás, saját workspace/profil és avatar. A helyi implementációs kapuk zöldek;
+a kiadási és production elfogadás még nyitott.
+
+1. PR-review, image build és valódi CockroachDB 26.2.2 tesztek az eldobható CI-fixture-ben.
+2. Külön jóváhagyott operatív feladat: avatar NFS/UID-jogosultságok, deployment mount-engedélylista és tenant-kompatibilis rollback-gate.
+3. Régi accountok auditja, egyszeri operator-provisionálás és kötelező jelszócsere, majd kontrollált deployment.
+4. Egy ADMIN és két PHOTOGRAPHER fiókos böngészős elfogadás, NFS-persistencia és negatív tenanttesztek.
+
+Az ügyfél-, galéria-, média- és proofingmodulok teljes megvalósítása későbbi ciklus.
+Az automatikus production deployment nem része ennek a fejlesztésnek.
 
 ## Dokumentációs státusz
 
-A `docs/03`–`docs/09` aktuális technikai állapotát a
-`BTPC-BL-2026-10-11-v0.3` baseline rögzíti. A v0.1 és v0.2 fájlok változatlan
-történeti pillanatképek.
+A `docs/01`–`docs/09` és a jóváhagyott CR-0001 követelményállapotát a
+[v0.4 baseline](docs/BASELINE-v0.4.md) rögzíti. A v0.1–v0.3 fájlok változatlan
+történeti pillanatképek. A részletes implementációs bizonyítékok és a nyitott AC-k
+a [CR-0001 jelentésben](docs/CR-0001-implementacios-jelentes.md) szerepelnek.

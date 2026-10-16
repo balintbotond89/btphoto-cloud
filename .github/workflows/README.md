@@ -1,5 +1,23 @@
 # GitHub Actions
 
+## CR-0001 PR-regresszió
+
+A preflight pozitív/negatív avatar-mount és regisztrációs gate fixture-eket kapott.
+A backend read-only root és cap_drop ALL szerződése megmarad, kizárólag az előírt avatar bind írható.
+A backend image külön, nem root, hálózat nélküli AvatarCodecProbe PNG/JPEG runtime-próbát és
+tenant-v1 account-contract címkeellenőrzést kap.
+
+A V3 migráció után három sikeres history sor, hat public tábla és az admin_user tíz oszlopa elvárt.
+Az eldobható CockroachDB-fixture a régi repository-teszt mellett az AccountRepositoryCockroachTest
+kétfotós profil-, kompozit FK-, e-mail-egyediség-, egyszeri jóváhagyás-, singleton- és
+kezdeti jelszófogyasztási konkurenciatesztjét is futtatja.
+A BTPHOTO_TEST_FIXTURE=ephemeral-cockroach26 marker és loopback insecure URL kötelező;
+a tesztek nem használhatják a production sql01 adatbázist.
+
+Helyben ezek hiányzó fixture esetén kihagyottak, nem sikeres DB-bizonyítékok.
+A GitHub-hosted futás a commit/push utáni PR-gate; ebben az implementációs munkában még nem futott.
+Az action-SHA-k és a három image közös SHA-szerződése megmaradnak.
+
 ## Quality CI
 
 A `quality-ci.yml` a backend és frontend automatizált minőségkapuja. A workflow
@@ -39,7 +57,7 @@ Pull request esetén:
   ellenőrzi a frontend `/health` és a gateway `/_gateway/health` végpontját a
   célzott `NET_BIND_SERVICE` capability mellett;
 - digesttel rögzített CockroachDB 26.2.2 CI-fixture-ben kétszer lefuttatja a
-  tényleges migrations image-et, ellenőrzi a sikeres V1 és V2 history sorokat,
+  tényleges migrations image-et, ellenőrzi a sikeres V1/V2/V3 history sorokat,
   az `admin_user` sémát és ugyanazon eldobható adatbázison a JPA repository
   integrációját, majd hibás kapcsolatnál igazolja a backend indítási kapujának
   blokkolását;
@@ -86,3 +104,9 @@ A következő, külön scope-ba tartozó lépések:
 
 - `production-deploy.yml` jóváhagyott production environmenttel, kontrollált
   runnerrel, health/smoke ellenőrzéssel és rollback-eljárással.
+
+## UI-01 kiegészítés
+
+A deployment-contract negatív fixture már a bekapcsolt, de CAPTCHA-konfiguráció nélküli
+regisztrációt is elutasítja. A backend CAPTCHA-tesztjei mockolt Google-válaszokat használnak;
+valódi secret és külső Google-hívás nem szükséges a CI-hez.

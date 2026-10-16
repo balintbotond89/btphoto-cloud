@@ -16,3 +16,10 @@ server:
     session:
       cookie:
         secure: true
+
+# A DB-hiba részletes SQL-kimenete személyes adatot tartalmazhat.
+logging:
+  level:
+    org.hibernate.SQL: "OFF"
+    org.hibernate.orm.jdbc.bind: "OFF"
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: "OFF"

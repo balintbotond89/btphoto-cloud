@@ -7,4 +7,6 @@ public record LoginRequest(
         @NotBlank @Size(max = 254) String identifier,
         @NotBlank @Size(max = 1024) String password
 ) {
+    @Override
+    public String toString() { return "LoginRequest[redacted]"; }
 }

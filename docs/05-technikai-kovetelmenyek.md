@@ -1,9 +1,23 @@
 # Technikai követelmények
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Új TR-TEN-0001: a backend accountból levezetett workspace-kontextus, tenant-szűrt repository és kanonikus tenant-storage útvonal kötelező. A TR-SEC-0001 két belső szerepet használ: singleton ADMIN és PHOTOGRAPHER; minden aktív rekord ADMIN szereppel való felruházása tilos. Az AppUser a fizikai admin_user táblát képezi le; új Flyway-migráció bővíti a sémát. Avatarhoz külön tartós storage-mount és ImageIO-alapú dekódolás/újrakódolás szükséges. A TR-DEP-0001 rollbackje többfotós adatállapotban csak kompatibilis korábbi release-t indíthat.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+### TR-TEN-0001 – Szerveroldali tulajdonosi kontextus
+
+A workspace a hitelesített AccountPrincipalból, az aktuális AppUser- és bindingállapot ellenőrzése után vezethető le. A kérés tenant-, role- vagy active-mezője nem jogosultságforrás. A profil lekérdezése (user_id, workspace_id) pár szerint történik; a profil és a workspace tulajdonosi kapcsolatát kompozit idegen kulcs védi. A jövőbeli ügyfél/galéria/média/selection kapcsolatokra azonos workspace és tenant-szűrt listák, keresés, darabszám és fájlelérés kötelező. Globális lekérdezés utáni frontend-szűrés nem elegendő.
+
+A tároló tenantprefixe és a backend authorization együttes védelem. Az avatar nem publikus static asset. A legacy, minden aktív fiókot adminná emelő image nem elfogadható rollback-cél többfotós adatállapotban. A deploy script operatív bővítése a kiadási kapu része, nem helyettesíthető health=UP eredménnyel.
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`

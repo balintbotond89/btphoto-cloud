@@ -3,8 +3,8 @@ package hu.btphoto.admin;
 import java.time.Instant;
 import java.util.UUID;
 
-import hu.btphoto.admin.model.AdminUser;
-import hu.btphoto.admin.repository.AdminUserRepository;
+import hu.btphoto.account.model.AppUser;
+import hu.btphoto.account.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@EnabledIfEnvironmentVariable(named = "BTPHOTO_TEST_JDBC_URL", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "BTPHOTO_TEST_JDBC_URL",
+        matches = "jdbc:postgresql://127\\.0\\.0\\.1:[0-9]+/btphoto\\?sslmode=disable")
+@EnabledIfEnvironmentVariable(named = "BTPHOTO_TEST_FIXTURE", matches = "ephemeral-cockroach26")
 class AdminUserRepositoryCockroachTest {
 
     @Autowired
-    private AdminUserRepository adminUserRepository;
+    private AppUserRepository adminUserRepository;
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
@@ -34,7 +36,7 @@ class AdminUserRepositoryCockroachTest {
     @Test
     void persistsAndFindsAdminByUsernameAndEmail() {
         var now = Instant.now();
-        var adminUser = new AdminUser(
+        var adminUser = new AppUser(
                 UUID.randomUUID(),
                 "integration-admin",
                 "integration-admin@btphoto.test",

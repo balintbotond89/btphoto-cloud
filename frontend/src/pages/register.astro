@@ -1,0 +1,15 @@
+---
+import AccountHeader from "@/components/AccountHeader.astro"
+import RegisterForm from "@/components/auth/RegisterForm.astro"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+<BaseLayout title="Regisztráció | BTPhoto Private Cloud" description="Saját, elkülönített fotósmunkaterület regisztrációja.">
+  <div class="account-shell registration-shell">
+    <div class="registration-backdrop" aria-hidden="true">
+      <canvas class="hero__wave" data-wave-canvas></canvas>
+      <div class="hero__contours"></div>
+    </div>
+    <AccountHeader />
+    <main id="fo-tartalom" class="registration-main"><RegisterForm /></main>
+  </div>
+</BaseLayout>

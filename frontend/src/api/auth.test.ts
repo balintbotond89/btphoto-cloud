@@ -1,3 +1,4 @@
+import { ADMIN_ACCOUNT } from "@/test/account"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -48,7 +49,7 @@ describe("auth API client", () => {
 
   it("a bejelentkezési adatokat JSON-ként és CSRF fejléccel küldi", async () => {
     const fetchMock = stubFetch(
-      new Response(JSON.stringify({ username: "admin" }), {
+      new Response(JSON.stringify(ADMIN_ACCOUNT), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
@@ -56,7 +57,7 @@ describe("auth API client", () => {
 
     await expect(
       authenticate({ identifier: "admin", password: "secret" }, CSRF_TOKEN),
-    ).resolves.toEqual({ username: "admin" })
+    ).resolves.toEqual(ADMIN_ACCOUNT)
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/auth/login")
@@ -98,13 +99,13 @@ describe("auth API client", () => {
 
   it("ellenőrzi az aktív admin munkamenet válaszát", async () => {
     stubFetch(
-      new Response(JSON.stringify({ username: "admin" }), {
+      new Response(JSON.stringify(ADMIN_ACCOUNT), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
     )
 
-    await expect(getCurrentAdmin()).resolves.toEqual({ username: "admin" })
+    await expect(getCurrentAdmin()).resolves.toEqual(ADMIN_ACCOUNT)
   })
 
   it("friss CSRF tokennel zárja le a munkamenetet", async () => {

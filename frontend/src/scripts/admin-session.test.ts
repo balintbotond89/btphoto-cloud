@@ -1,3 +1,4 @@
+import { ADMIN_ACCOUNT } from "@/test/account"
 import { describe, expect, it, vi } from "vitest"
 
 import { AuthApiError } from "@/api/auth"
@@ -31,7 +32,7 @@ function createDependencies(
   overrides: Partial<AdminSessionDependencies> = {},
 ): AdminSessionDependencies {
   return {
-    loadAdmin: vi.fn().mockResolvedValue({ username: "admin" }),
+    loadAdmin: vi.fn().mockResolvedValue(ADMIN_ACCOUNT),
     logout: vi.fn().mockResolvedValue(undefined),
     navigate: vi.fn(),
     ...overrides,
@@ -48,6 +49,16 @@ describe("admin session", () => {
     expect(root.querySelector<HTMLElement>("[data-admin-loading]")?.hidden).toBe(true)
     expect(root.querySelector<HTMLElement>("[data-admin-content]")?.hidden).toBe(false)
     expect(root.querySelector("[data-admin-username]")?.textContent).toBe("admin")
+  })
+
+  it("fotósnak nem nyit adminnézetet", async () => {
+    const root = createAdminSession()
+    const dependencies = createDependencies({ loadAdmin: vi.fn().mockResolvedValue({
+      ...ADMIN_ACCOUNT, role: "PHOTOGRAPHER", workspaceId: "fixture-workspace",
+    }) })
+    await refreshAdminSession(root, dependencies)
+    expect(dependencies.navigate).toHaveBeenCalledWith("/workspace/")
+    expect(root.querySelector<HTMLElement>("[data-admin-content]")?.hidden).toBe(true)
   })
 
   it("hiányzó munkamenetnél a login oldalra irányít", async () => {

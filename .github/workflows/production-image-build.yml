@@ -181,6 +181,44 @@ jobs:
             fi
           done
 
+      - name: Avatar és CAPTCHA negatív deployment-contract fixture-ek
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture_root=$(mktemp -d)
+          trap 'rm -rf "${fixture_root}"' EXIT
+          printf '%s\n' \
+            'BTPHOTO_IMAGE_TAG=0123456789abcdef0123456789abcdef01234567' \
+            'DB_HOST=db.example' 'DB_PORT=26257' 'DB_NAME=btphoto' \
+            'DB_USERNAME=btphoto_app' 'DB_PASSWORD=ci-dummy-not-production' > "${fixture_root}/dummy.env"
+          for fixture in readonly wrongsource wrongtarget invalidgate missingcaptcha; do
+            mkdir -p "${fixture_root}/${fixture}"
+            cp deploy/validate-production-config.sh deploy/compose.production.yml "${fixture_root}/${fixture}/"
+            python3 - "${fixture_root}/${fixture}/compose.production.yml" "${fixture}" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          text = path.read_text()
+          case = sys.argv[2]
+          if case == "readonly":
+              text = text.replace("        read_only: false", "        read_only: true")
+          elif case == "wrongsource":
+              text = text.replace("/srv/btphoto/media/avatars", "/tmp/ephemeral-avatars")
+          elif case == "wrongtarget":
+              text = text.replace("        target: /srv/btphoto/avatars", "        target: /srv/btphoto/wrong")
+          elif case == "invalidgate":
+              text = text.replace("${BTPHOTO_REGISTRATION_ENABLED:-false}", "yes")
+          else:
+              text = text.replace("${BTPHOTO_REGISTRATION_ENABLED:-false}", '"true"')
+          path.write_text(text)
+          PY
+            if sh "${fixture_root}/${fixture}/validate-production-config.sh" "${fixture_root}/dummy.env"; then
+              echo "::error::Hibás avatar/gate fixture elfogadva: ${fixture}"
+              exit 1
+            fi
+          done
+
+
       - name: Gateway Caddyfile natív validálása
         run: |
           docker run --rm --network none --read-only --tmpfs /tmp \
@@ -263,6 +301,22 @@ jobs:
             --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
             "${RUNTIME_IMAGE}")
           [[ "${actual_revision}" == "${EXPECTED_REVISION}" ]]
+
+      - name: Avatar PNG/JPEG codec a végleges backend JRE-ben
+        if: matrix.component == 'backend'
+        shell: bash
+        env:
+          RUNTIME_IMAGE: btphoto-backend:ci-${{ github.event.pull_request.head.sha }}
+        run: |
+          account_contract=$(docker image inspect --format '{{ index .Config.Labels "hu.btphoto.account-contract" }}' "${RUNTIME_IMAGE}")
+          [[ "${account_contract}" == "tenant-v1" ]]
+          docker run --rm --network none --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 10001:10001 --memory 128m --entrypoint java \
+            "${RUNTIME_IMAGE}" -Djava.awt.headless=true \
+            -cp /app/healthcheck AvatarCodecProbe
+
 
       - name: Caddy runtime capability regresszió ellenőrzése
         if: matrix.component == 'frontend'
@@ -379,6 +433,7 @@ jobs:
           docker network create "${network}" >/dev/null
           docker run --detach \
             --name "${database_container}" \
+            --label hu.btphoto.fixture=ephemeral-cockroach26 \
             --network "${network}" \
             --publish 127.0.0.1::26257 \
             --read-only \
@@ -486,23 +541,23 @@ jobs:
           history_count=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
             --format=csv \
-            --execute "SELECT count(*) FROM public.flyway_schema_history WHERE version IN ('1', '2') AND success" \
+            --execute "SELECT count(*) FROM public.flyway_schema_history WHERE version IN ('1', '2', '3') AND success" \
             | tail -n 1 | tr -d '\r')
-          [[ "${history_count}" == "2" ]]
+          [[ "${history_count}" == "3" ]]
 
           public_table_count=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
             --format=csv \
             --execute "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'" \
             | tail -n 1 | tr -d '\r')
-          [[ "${public_table_count}" == "2" ]]
+          [[ "${public_table_count}" == "6" ]]
 
           admin_column_count=$(docker exec "${database_container}" \
             cockroach sql --insecure --host=127.0.0.1:26257 --user=btphoto_app --database=btphoto \
             --format=csv \
             --execute "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'admin_user'" \
             | tail -n 1 | tr -d '\r')
-          [[ "${admin_column_count}" == "7" ]]
+          [[ "${admin_column_count}" == "10" ]]
 
           database_host_port=$(docker inspect \
             --format '{{(index (index .NetworkSettings.Ports "26257/tcp") 0).HostPort}}' \
@@ -510,9 +565,10 @@ jobs:
           chmod +x backend/mvnw
           BTPHOTO_TEST_JDBC_URL="jdbc:postgresql://127.0.0.1:${database_host_port}/btphoto?sslmode=disable" \
           BTPHOTO_TEST_DB_USERNAME=btphoto_app \
+          BTPHOTO_TEST_FIXTURE=ephemeral-cockroach26 \
           BTPHOTO_TEST_DB_PASSWORD='' \
             ./backend/mvnw -B -ntp -f backend/pom.xml \
-              -Dtest=AdminUserRepositoryCockroachTest test
+              -Dtest=AdminUserRepositoryCockroachTest,AccountRepositoryCockroachTest test
 
           if run_migration "${migration_invalid}" \
             'jdbc:postgresql://missing-cockroach.invalid:26257/btphoto?sslmode=disable'; then

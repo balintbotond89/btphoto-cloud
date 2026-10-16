@@ -124,6 +124,7 @@
                 <configuration>
                     <effort>Max</effort>
                     <threshold>Low</threshold>
+                    <excludeFilterFile>config/spotbugs/di-exclusions.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                     <execution>

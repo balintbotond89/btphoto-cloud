@@ -5,14 +5,14 @@ import Input from "@/components/ui/Input.astro"
 
 <section class="auth-card" data-login-form-root aria-labelledby="login-title">
   <header class="auth-card__header">
-    <p class="technical-label">ADMIN HOZZÁFÉRÉS / 001</p>
+    <p class="technical-label">KÖZÖS BEJELENTKEZÉS / 001</p>
     <h1 id="login-title">Bejelentkezés</h1>
     <p>
-      A kezelőfelület kizárólag hitelesített adminisztrátori munkamenettel érhető el.
+      Kérjük adja meg adatait:
     </p>
   </header>
 
-  <form class="auth-form" data-login-form novalidate>
+  <form class="auth-form" data-login-form method="post" action="/api/auth/login" novalidate>
     <Input
       id="identifier"
       name="identifier"
@@ -33,6 +33,7 @@ import Input from "@/components/ui/Input.astro"
       Bejelentkezés
     </Button>
   </form>
+  <p class="auth-card__footer">Még nincs fiókod? <a href="/register/">Regisztráció</a></p>
 </section>
 
 <script>

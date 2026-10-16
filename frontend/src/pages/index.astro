@@ -20,7 +20,10 @@ import BaseLayout from "@/layouts/BaseLayout.astro"
       </a>
 
       <div class="site-header__actions">
-        <span class="build-label">ASTRO / WALKING SKELETON</span>
+        <nav class="account-links" aria-label="Fiókműveletek">
+          <Button href="/register/" variant="outline" size="small">Regisztráció</Button>
+          <Button href="/login/" size="small">Belépés</Button>
+        </nav>
         <ThemeToggle />
       </div>
     </header>

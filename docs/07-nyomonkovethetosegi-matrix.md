@@ -1,9 +1,34 @@
 # Nyomonkövethetőségi mátrix
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Új lánc: BR-FNC-0001/0002 és BR-DAT-0001 → Epic 1 → US-0015/0016/0017 → FR-AUT-0002/0003, FR-PRF-0001/0002, FR-TEN-0001 → CR-0001 9. fejezetének 25 AC-ja → NFR-SEC-0001/0002, NFR-PRV-0001, NFR-USB-0001/0002 → TR-SEC-0001, TR-TEN-0001, TR-DAT-0002, TR-STO-0001 → TC-REG/ADM/TEN. A követelménylánc megléte lefedettséget, nem kész implementációt jelent. Régi közös admin-workspace feltételezés erre a scope-ra nem érvényes.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+### CR-0001 követelmény → megvalósítás → ellenőrzés
+
+A [2026-10-15-i UI-01 kiegészítés](CR-0001-UI-01-regisztracios-javitasok.md) új AC-FR-AUT-0002-07 / TC-REG-0013 eleme a RecaptchaVerifier, RegistrationController és recaptcha.ts komponensekhez, valamint pozitív/negatív CAPTCHA-tesztekhez kapcsolódik. AC-FR-AUT-0002-02/06: tartós mezőhiba, kért szövegek és közös motion canvas. A valódi Google-kulcsos próba még nem teljesített.
+
+| US / FR | Repository-komponens | TC / bizonyíték |
+| --- | --- | --- |
+| US-0015 / FR-AUT-0002 | RegistrationController/Service, V3, register.astro | TC-REG-0001–0006; AccountFlowIntegrationTest, RegistrationCompensationTest |
+| US-0015 / FR-PRF-0001 | ProfileService, PhotographerProfile/Business, registration-form.ts | TC-REG-0007/0008; kétfotós MockMvc és CockroachDB repository-fixture |
+| US-0015 / FR-PRF-0002 | AvatarStorageService, NfsAvatarStorageService, AccountHeader | TC-REG-0009/0010/0012; AvatarStorageTest, konténeres AvatarCodecProbe, éles NFS-elfogadás |
+| US-0016 / FR-AUT-0003 | SystemAdmin, OperatorProvisioningService, PasswordChangeService, AccountSessionFilter, ApprovalService, operator.ts | TC-ADM-0001–0007; MockMvc, provisionálási és konkurens CockroachDB-fixture |
+| US-0017 / FR-TEN-0001 | AccountPrincipal, tenant-szűrt profile repository, V3 kompozit FK | TC-TEN-0001/0002/0005; kétfotós profil- és avatar-fixture |
+| AC-FR-AUT-0002-06 | főoldali linkek, register/login Astro-oldalak | TC-REG-0011; 390/768/1280 px lokális böngészős ellenőrzés |
+| AC-FR-TEN-0001-03/04/06 | későbbi üzleti modulok tenant-szerződése | TC-TEN-0003/0004 és teljes üzleti lista/keresés: még nincs implementáció |
+| AC-FR-TEN-0001-07 | külön operatív deployment-script kapu | TC-TEN-0007: még nincs éles/szerveroldali végrehajtási bizonyíték |
+
+Az AccountFlowIntegrationTest repository-mockokra épül, ezért nem valódi DB-bizonyíték. Az AccountRepositoryCockroachTest eldobható CI-fixture-ben fut; helyi kihagyása nem tekinthető sikernek. Az éles, egy ADMIN + két PHOTOGRAPHER elfogadás külön checkpoint.
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`

@@ -1,0 +1,28 @@
+---
+import AccountHeader from "@/components/AccountHeader.astro"
+import Button from "@/components/ui/Button.astro"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+<BaseLayout title="Saját munkaterület | BTPhoto Private Cloud" description="A fotós saját, elkülönített munkaterülete.">
+  <div class="admin-shell"><AccountHeader protectedView />
+    <main id="fo-tartalom" class="admin-main" data-workspace>
+      <p data-workspace-status role="status" aria-live="polite">Munkamenet ellenőrzése…</p>
+      <Button variant="outline" dataAction="workspace-retry">Újrapróbálás</Button>
+      <section class="admin-dashboard" data-workspace-content hidden>
+        <header class="admin-dashboard__header">
+          <div><p class="technical-label">SAJÁT FOTÓSMUNKATERÜLET</p><h1 data-workspace-name></h1></div>
+          <Button variant="outline" dataAction="workspace-logout">Kijelentkezés</Button>
+        </header>
+        <article class="admin-placeholder">
+          <h2>Saját profil</h2><dl class="profile-details" data-profile-details></dl>
+        </article>
+        <p>A munkaterületed csak a saját fiókodhoz tartozik. Az ügyfél- és galériakezelés külön fejlesztési fázis.</p>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+<script>
+  import { mountWorkspace } from "@/scripts/workspace"
+  const root = document.querySelector<HTMLElement>("[data-workspace]")
+  if (root) mountWorkspace(root)
+</script>

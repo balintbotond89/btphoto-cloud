@@ -1,9 +1,38 @@
 # Epic-ek és User Story-k
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Az Epic 1 kiegészül a US-0015 Fotósregisztráció és profil, US-0016 Üzemeltetői jóváhagyás és egyszeri admin-bootstrap, US-0017 Fotósmunkaterületek elkülönítése storykkal. Státuszuk elfogadott, implementációjuk folyamatban. A teljes AC-szerződés a CR-0001 9. fejezetében szerepel. A US-0001 közös loginja ADMIN esetén /admin/, PHOTOGRAPHER esetén /workspace/ célra navigál; első adminbelépéskor csak kötelező jelszócsere engedélyezett.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+### US-0015 – Fotós regisztrációja és saját profilja
+
+- Epic: Fotósfiókok, üzemeltetői jóváhagyás, saját ügyfél- és galériakezelés.
+- Státusz: elfogadott követelmény; a kiadási és éles elfogadási bizonyíték külön vezetendő.
+- Story: fotósként személyes és opcionális vállalkozási adataimmal, opcionális avatarral regisztrálok; jóváhagyásig nem léphetek be.
+- FR: FR-AUT-0002, FR-PRF-0001, FR-PRF-0002. AC: e FR-ek valamennyi CR-0001-ben rögzített kritériuma.
+- Scope: regisztráció, saját profil, avatar; nem ügyfél- vagy galéria-CRUD.
+
+### US-0016 – Egyetlen üzemeltető és regisztráció-elbírálás
+
+- Story: az egyetlen ADMIN a közös loginon lép be; az /admin/ oldalon elsőként kötelező jelszócserét végez, majd fotósregisztrációt hagy jóvá vagy utasít el.
+- FR: FR-AUT-0003, kiegészített FR-AUT-0001.
+- AC: AC-FR-AUT-0003-01–07; CSRF, egyszeri kezdeti belépés, singleton binding és valamennyi korábbi admin-session visszavonása.
+- Az alkalmazásszintű adminjog nem jogosít fel fotósok üzleti tartalmának megnyitására.
+
+### US-0017 – Elkülönített fotósmunkaterületek
+
+- Story: minden jóváhagyott fotós saját workspace-t és profilt használ; más fotós adatait vagy képfájlját nem érheti el.
+- FR/TR: FR-TEN-0001, TR-TEN-0001. AC: AC-FR-TEN-0001-01–07.
+- Aktuális implementációs határ: account/workspace/profile/avatar. A Client/Gallery/Media/Selection tenant-szerződés már kötelező, implementációja és tesztje későbbi ciklus.
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 A backlog jelenlegi változata 5 MVP epicet és 1 későbbi bővítési irányt tartalmaz. A szerkezet az üzleti követelményekből indul ki, az elfogadási kritériumok pedig közvetlenül előkészítik a funkcionális követelményeket és a teszteseteket.
 

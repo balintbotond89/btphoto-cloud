@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import hu.btphoto.admin.model.AdminUser;
-import hu.btphoto.admin.repository.AdminUserRepository;
+import hu.btphoto.account.model.AppUser;
+import hu.btphoto.account.repository.AppUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("no-database")
-@Import(AuthSecurityIntegrationTest.AdminEndpointTestConfiguration.class)
+@Import({AuthSecurityIntegrationTest.AdminEndpointTestConfiguration.class, hu.btphoto.TestTransactions.class})
 class AuthSecurityIntegrationTest {
 
     private static final String USERNAME = "admin";
@@ -54,12 +54,18 @@ class AuthSecurityIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     @MockitoBean
-    private AdminUserRepository adminUserRepository;
+    private AppUserRepository adminUserRepository;
+
+    @MockitoBean
+    private hu.btphoto.account.repository.SystemAdminRepository operators;
+
+    @MockitoBean
+    private hu.btphoto.workspace.repository.PhotographerWorkspaceRepository workspaces;
 
     @BeforeEach
     void setUpAdminUser() {
         var now = Instant.now();
-        var adminUser = new AdminUser(
+        var adminUser = new AppUser(
                 UUID.randomUUID(),
                 USERNAME,
                 EMAIL,
@@ -70,6 +76,9 @@ class AuthSecurityIntegrationTest {
         );
         when(adminUserRepository.findByUsernameIgnoreCase(USERNAME)).thenReturn(Optional.of(adminUser));
         when(adminUserRepository.findByEmailIgnoreCase(EMAIL)).thenReturn(Optional.of(adminUser));
+        when(adminUserRepository.findById(adminUser.getId())).thenReturn(Optional.of(adminUser));
+        when(operators.findById((short) 1)).thenReturn(Optional.of(
+                new hu.btphoto.account.model.SystemAdmin(adminUser.getId(), false)));
     }
 
     @Test
@@ -158,7 +167,7 @@ class AuthSecurityIntegrationTest {
     @Test
     void rejectsInactiveAdminWithTheGenericAuthenticationError() throws Exception {
         var now = Instant.now();
-        var inactiveAdmin = new AdminUser(
+        var inactiveAdmin = new AppUser(
                 UUID.randomUUID(),
                 USERNAME,
                 EMAIL,

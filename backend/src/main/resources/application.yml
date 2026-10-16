@@ -1,6 +1,13 @@
 spring:
   application:
     name: btphoto-backend
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
 
 server:
   servlet:
@@ -22,3 +29,15 @@ management:
       base-path: /api
       exposure:
         include: health
+
+btphoto:
+  recaptcha:
+    site-key: ${BTPHOTO_RECAPTCHA_SITE_KEY:}
+    secret: ${BTPHOTO_RECAPTCHA_SECRET:}
+    hostnames: ${BTPHOTO_RECAPTCHA_HOSTNAMES:}
+  registration:
+    enabled: ${BTPHOTO_REGISTRATION_ENABLED:false}
+    trusted-gateway: ${BTPHOTO_TRUSTED_GATEWAY:}
+  avatar:
+    root: ${BTPHOTO_AVATAR_ROOT:}
+    require-nfs: true
