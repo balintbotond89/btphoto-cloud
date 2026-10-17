@@ -204,7 +204,7 @@ jobs:
             'BTPHOTO_IMAGE_TAG=0123456789abcdef0123456789abcdef01234567' \
             'DB_HOST=db.example' 'DB_PORT=26257' 'DB_NAME=btphoto' \
             'DB_USERNAME=btphoto_app' 'DB_PASSWORD=ci-dummy-not-production' > "${fixture_root}/dummy.env"
-          for fixture in readonly wrongsource wrongtarget invalidgate missingcaptcha; do
+          for fixture in readonly wrongsource wrongtarget invalidgate missingcaptcha autocreate missingbind; do
             mkdir -p "${fixture_root}/${fixture}"
             cp deploy/validate-production-config.sh deploy/compose.production.yml "${fixture_root}/${fixture}/"
             python3 - "${fixture_root}/${fixture}/compose.production.yml" "${fixture}" <<'PY'
@@ -221,8 +221,12 @@ jobs:
               text = text.replace("        target: /srv/btphoto/avatars", "        target: /srv/btphoto/wrong")
           elif case == "invalidgate":
               text = text.replace("${BTPHOTO_REGISTRATION_ENABLED:-false}", "yes")
-          else:
+          elif case == "missingcaptcha":
               text = text.replace("${BTPHOTO_REGISTRATION_ENABLED:-false}", '"true"')
+          elif case == "autocreate":
+              text = text.replace("          create_host_path: false", "          create_host_path: true")
+          else:
+              text = text.replace("        bind:\n          create_host_path: false\n", "")
           path.write_text(text)
           PY
             if sh "${fixture_root}/${fixture}/validate-production-config.sh" "${fixture_root}/dummy.env"; then

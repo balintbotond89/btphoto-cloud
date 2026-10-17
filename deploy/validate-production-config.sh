@@ -107,7 +107,10 @@ fi
 
 resolved_config=$(mktemp)
 chmod 0600 "$resolved_config"
-trap 'rm -f "$resolved_config"' EXIT HUP INT TERM
+bind_reference=''
+trap 'rm -f "$resolved_config"; if [ -n "$bind_reference" ]; then rm -f "$bind_reference"; fi' EXIT HUP INT TERM
+bind_reference=$(mktemp)
+chmod 0600 "$bind_reference"
 
 if ! docker compose \
     --env-file "$env_file" \
@@ -116,12 +119,34 @@ if ! docker compose \
     fail "a feloldott Compose-konfiguracio nem kerdezheto le"
 fi
 
-if ! python3 - "$resolved_config" <<'PY'
+# A Compose-verziók másként hagyják ki a JSON logikai alapértékeit.
+# Ugyanazon parser explicit false referenciája nélkül nincs implicit elfogadás.
+if ! docker compose \
+    --project-name btphoto-bind-contract \
+    --env-file "$env_file" \
+    -f - config --format json >"$bind_reference" <<'YAML'
+services:
+  bind-contract:
+    image: btphoto-preflight-probe:unused
+    volumes:
+      - type: bind
+        source: /srv/btphoto/media/avatars
+        target: /srv/btphoto/avatars
+        bind:
+          create_host_path: false
+YAML
+then
+    fail "a Compose bind false referenciaja nem kerdezheto le"
+fi
+
+if ! python3 - "$resolved_config" "$bind_reference" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as config_file:
     config = json.load(config_file)
+with open(sys.argv[2], encoding="utf-8") as reference_file:
+    reference = json.load(reference_file)
 
 services = config.get("services", {})
 backend = services.get("backend")
@@ -210,7 +235,18 @@ require(backend_ca.get("type") == "bind" and backend_ca.get("source") == "/etc/b
 avatar = by_target["/srv/btphoto/avatars"]
 require(avatar.get("type") == "bind" and avatar.get("source") == "/srv/btphoto/media/avatars"
         and not avatar.get("read_only"), "az avatar mount nem a rogzitett irhato NFS-alkonyvtar")
-require((avatar.get("bind") or {}).get("create_host_path") is False,
+# Régi Compose: bind={}, újabb: bind={create_host_path: false}.
+# Az újabb verzióban az üres bind true értéket is jelenthet: csak a mért false alak jó.
+reference_mounts = reference.get("services", {}).get("bind-contract", {}).get("volumes") or []
+require(len(reference_mounts) == 1, "a Compose bind referencia mountkeszlete elter")
+reference_bind = reference_mounts[0].get("bind")
+require(isinstance(reference_bind, dict) and (
+    not reference_bind or (set(reference_bind) == {"create_host_path"}
+                           and reference_bind["create_host_path"] is False)),
+        "a Compose explicit false bind abrazolasa nem tamogatott")
+avatar_bind = avatar.get("bind")
+require(isinstance(avatar_bind, dict) and set(avatar_bind) == set(reference_bind)
+        and ("create_host_path" not in avatar_bind or avatar_bind["create_host_path"] is False),
         "az avatar hostkonyvtarat Docker nem hozhatja letre automatikusan")
 require(backend.get("read_only") is True and backend.get("cap_drop") == ["ALL"]
         and not backend.get("cap_add"), "a backend runtime vedelme elter")

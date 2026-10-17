@@ -269,3 +269,46 @@ A Git-átadás nem engedélyezi a CD kapcsolóit, a runner regisztrálását, me
 staging- vagy production-telepítést. A valódi PR/kiadási CI, runner negatív próba,
 teljes kétirányú DB-izoláció, staging migráció/runtime/rollback/böngésző,
 production cutover és publikus TLS továbbra is nyitott elfogadási kapu.
+
+## 10. PR #11 preflight JSON-regresszió javítása – 2026-10-17
+
+A 00b78c91bd1fc2857a90e27713a23f77b1531f9d fejű PR #11 contract jobja
+az avatar create_host_path ellenőrzésénél bukott el. A backend/frontend/migrations
+image-jobok és a két quality gate sikeresek. A hiba nem élő DB- vagy NFS-elérési
+próba eredménye: a validátor a szabályos konfiguráció JSON-ábrázolását utasította el.
+A runner ubuntu24/20261012.334 szoftverlistája Compose 2.38.2-t tartalmaz;
+ennek compose-go 2.7.1 típusa false értéknél kihagyja a create_host_path mezőt.
+A docker01 Compose 5.6.0 explicit false értéket ír; az újabb ábrázolásban viszont
+az üres bind true alapértéket is jelenthet. Egyszerű get(..., False) emiatt nem
+biztonságos, és nem ez lett a javítás.
+
+A validátor ugyanazzal a Compose-példánnyal egy külön, rögzített, explicit false
+referenciát is felold. Ez kizárólag config művelet, nem build/pull/run/up;
+a dummy referencia-image nem töltődik le. A 0600 ideiglenes referencia JSON-t
+a meglévő EXIT/HUP/INT/TERM takarítás kezeli. Csak az azonos parser ismert false
+alakjával egyező bind fogadható el; true, hibás típus, hiányzó bind és ismeretlen
+referencia elutasított. A CA/avatar útvonal-, írhatóság-, read-only root- és
+capability-kapuk megmaradtak. Új dependency, üzleti szabály és migráció nincs.
+
+Érintett fájlok: deploy/validate-production-config.sh,
+deploy/cd/tests/test_preflight.py, .github/workflows/production-image-build.yml
+és ez a jelentés. A workflow két további natív negatív fixture-t kapott:
+autocreate és missingbind. US-0012 / AC-CD-02/03 / TC-CD-02/03,
+valamint FR-PRF-0002 / TC-REG-0012 implementációs támogatása; új AC nem keletkezett.
+
+Ellenőrzés: Windows alatt 56 tesztből 54 sikeres, 2 POSIX-specifikus kihagyott.
+A hivatalos Compose 2.38.2 ideiglenes Windows-binárisa SHA-256 ellenőrzés után,
+telepítés és Docker-konténer nélkül előállította a valódi JSON-okat: a teljes
+beágyazott Python-kapu a szabályos esetet elfogadta, a true és hiányzó bind esetet
+elutasította. A docker01 ideiglenes könyvtárában a teljes 56/56 teszt sikeres;
+a Linux telepítőfixture-ek root műveletei továbbra is mockoltak. A workflow
+Production preflight és Avatar/CAPTCHA negatív lépése natívan is sikeres
+Compose 5.6.0 alatt. A negatív esetek hibaüzenetei elvárt elutasítások.
+Az ideiglenes forrás/fixture könyvtár automatikusan törlődött; az előtte/utána
+konténerazonosítók és státuszok megegyeztek. Production env nem lett kiolvasva.
+
+A shell és workflow szintaktikai ellenőrzése, actionlint és git diff --check
+sikeres. Alkalmazáskód, SQL, Compose deployment-konfiguráció és a telepített
+CD-motor forrása változatlan; a motor hash-e továbbra is 85976b9f...92e34.
+Staging, commit, push, CI-újrafuttatás, root telepítés és deployment nem történt.
+A javított PR GitHub-hosted zöld futása külön, még nyitott verifikációs kapu.
