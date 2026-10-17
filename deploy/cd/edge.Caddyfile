@@ -1,0 +1,38 @@
+{
+	admin off
+}
+
+(security_headers) {
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+	}
+}
+
+btphoto.hu, www.btphoto.hu {
+	import security_headers
+	reverse_proxy production-gateway:8080 {
+		header_up -X-BTPhoto-Client-IP
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto https
+	}
+}
+
+staging.btphoto.hu {
+	import security_headers
+	header X-Robots-Tag "noindex, nofollow, noarchive"
+	route {
+		basic_auth bcrypt {
+			{env.STAGING_BASIC_AUTH_USERNAME} {env.STAGING_BASIC_AUTH_HASH}
+		}
+		# A belépési kapu jelszava nem kerül az alkalmazáshoz.
+		request_header -Authorization
+		reverse_proxy staging-gateway:8080 {
+			header_up -X-BTPhoto-Client-IP
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto https
+		}
+	}
+}

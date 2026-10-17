@@ -3,6 +3,8 @@ package hu.btphoto.auth.controller;
 import hu.btphoto.auth.dto.AuthenticatedAdminResponse;
 import hu.btphoto.auth.dto.CsrfTokenResponse;
 import hu.btphoto.auth.dto.LoginRequest;
+import hu.btphoto.auth.dto.PasswordChangeRequest;
+import hu.btphoto.auth.service.PasswordChangeService;
 import hu.btphoto.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,17 +31,20 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
     private final LogoutHandler logoutHandler;
+    private final PasswordChangeService passwordChangeService;
 
     public AuthController(
             AuthService authService,
             SecurityContextRepository securityContextRepository,
             SessionAuthenticationStrategy sessionAuthenticationStrategy,
-            LogoutHandler logoutHandler
+            LogoutHandler logoutHandler,
+            PasswordChangeService passwordChangeService
     ) {
         this.authService = authService;
         this.securityContextRepository = securityContextRepository;
         this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
         this.logoutHandler = logoutHandler;
+        this.passwordChangeService = passwordChangeService;
     }
 
     @GetMapping("/csrf")
@@ -71,6 +76,14 @@ public class AuthController {
     @GetMapping("/me")
     public AuthenticatedAdminResponse me(Authentication authentication) {
         return authService.describe(authentication);
+    }
+
+    @PostMapping("/change-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@Valid @RequestBody PasswordChangeRequest passwordChange,
+            HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        passwordChangeService.change(authService.principal(authentication), passwordChange);
+        logoutHandler.logout(request, response, authentication);
     }
 
     @PostMapping("/logout")

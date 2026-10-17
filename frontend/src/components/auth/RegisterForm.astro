@@ -1,0 +1,63 @@
+---
+import Input from "@/components/ui/Input.astro"
+import Select from "@/components/ui/Select.astro"
+import Button from "@/components/ui/Button.astro"
+import AddressFields from "@/components/profile/AddressFields.astro"
+---
+<form class="registration-form" data-registration-form method="post" action="/api/auth/register"
+  enctype="multipart/form-data" novalidate aria-labelledby="register-title">
+  <header data-reveal>
+    <p class="technical-label">SAJÁT FOTÓSMUNKATERÜLET / REGISZTRÁCIÓ</p>
+    <h1 id="register-title">Fiók létrehozása</h1>
+    <p>A bejelentkezés az üzemeltető jóváhagyása után válik elérhetővé. A * jelölt mezők kötelezőek.</p>
+  </header>
+  <fieldset>
+    <legend>Személyes adatok</legend>
+    <div class="form-grid">
+      <Select id="salutation" name="salutation" label="Megszólítás (opcionális)"
+        options={["Id.", "Ifj.", "Özv.", "Dr.", "PhD.", "Prof.", "Dr. habil."]} />
+      <Input id="lastName" name="lastName" label="Vezetéknév" autocomplete="family-name" required maxlength={100} />
+      <Input id="firstName" name="firstName" label="Utónév" autocomplete="given-name" required maxlength={100} />
+      <Input id="email" name="email" label="E-mail-cím" type="email" autocomplete="email" required maxlength={254} />
+      <Input id="register-password" name="password" label="Jelszó" type="password" autocomplete="new-password"
+        description="Legalább 12 karakter, legfeljebb 72 UTF-8 bájt." required minlength={12} maxlength={72} />
+      <Input id="passwordConfirmation" name="passwordConfirmation" label="Jelszó megerősítése"
+        type="password" autocomplete="new-password" required minlength={12} maxlength={72} />
+      <Input id="phone" name="phone" label="Telefonszám (opcionális)" type="tel" maxlength={32} />
+      <Input id="mobile" name="mobile" label="Mobilszám (opcionális)" type="tel" autocomplete="tel" maxlength={32} />
+    </div>
+  </fieldset>
+  <fieldset><legend>Cím / lakhely (opcionális)</legend><AddressFields prefix="homeAddress" /></fieldset>
+  <fieldset><legend>Telephely (opcionális)</legend><AddressFields prefix="siteAddress" /></fieldset>
+  <label class="business-toggle"><input type="checkbox" name="hasBusiness" aria-controls="business-fields" /> Van vállalkozásom</label>
+  <fieldset id="business-fields" data-business-fields disabled hidden>
+    <legend>Vállalkozási adatok</legend>
+    <div class="form-grid">
+      <Select id="business-type" name="business.type" label="Vállalkozási forma" required
+        options={["Kft.", "Bt.", "Kkt.", "Zrt.", "Nyrt.", "egyéni vállalkozó", "egyéb"]} />
+      <Input id="business-name" name="business.name" label="Cég / vállalkozás neve" required maxlength={200} />
+      <Input id="business-tax" name="business.taxNumber" label="Adószám" required maxlength={32} />
+      <Input id="business-number" name="business.registrationNumber" label="Cégjegyzékszám (opcionális)" maxlength={32} />
+    </div>
+    <h2>Vállalkozás címe</h2><AddressFields prefix="business.address" required />
+  </fieldset>
+  <fieldset>
+    <legend>Profilkép (opcionális)</legend>
+    <label class="ui-field__label" for="avatar">Profilkép: JPEG vagy PNG, legfeljebb 2 MiB</label>
+    <input class="ui-input" id="avatar" name="avatar" type="file" accept="image/jpeg,image/png" aria-describedby="avatar-help" />
+    <p id="avatar-help">Legfeljebb 4096 pixel és 4 megapixel. A rendszer négyzetes, 256 × 256 pixeles képet készít.</p>
+    <img class="registration-preview account-avatar" data-avatar-preview hidden alt="Kiválasztott profilkép előnézete" />
+  </fieldset>
+  <fieldset data-registration-captcha tabindex="-1" aria-describedby="registration-captcha-status">
+    <legend>Biztonsági ellenőrzés</legend>
+    <div data-captcha-widget></div>
+    <p id="registration-captcha-status" data-captcha-status role="status" aria-live="polite">A CAPTCHA betöltése folyamatban…</p>
+  </fieldset>
+  <p class="auth-form__status" data-registration-status role="status" aria-live="polite" tabindex="-1"></p>
+  <Button type="submit" dataAction="registration-submit">Regisztráció beküldése</Button>
+  <p>Már van jóváhagyott fiókod? <a href="/login/">Bejelentkezés</a></p>
+</form>
+<script>
+  import { mountRegistration } from "@/scripts/registration-form"
+  document.querySelectorAll<HTMLFormElement>("[data-registration-form]").forEach((form) => mountRegistration(form))
+</script>

@@ -48,6 +48,7 @@ RUN chmod +x ./mvnw \
 
 COPY config/ config/
 COPY src/ src/
+COPY docker/AvatarCodecProbe.java /tmp/AvatarCodecProbe.java
 
 RUN ./mvnw -B -ntp -DskipTests \
       -Dproject.build.outputTimestamp=1980-01-01T00:00:02Z package \
@@ -83,6 +84,7 @@ public final class HealthCheck {
 }
 JAVA
 javac -d /tmp/healthcheck /tmp/HealthCheck.java
+javac -d /tmp/healthcheck /tmp/AvatarCodecProbe.java
 EOF
 
 FROM eclipse-temurin:21.0.12.1_1-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS runtime
@@ -91,7 +93,8 @@ ARG OCI_SOURCE
 ARG OCI_REVISION
 
 LABEL org.opencontainers.image.source="${OCI_SOURCE}" \
-      org.opencontainers.image.revision="${OCI_REVISION}"
+      org.opencontainers.image.revision="${OCI_REVISION}" \
+      hu.btphoto.account-contract="tenant-v1"
 
 RUN groupadd --system --gid 10001 btphoto \
     && useradd --system --uid 10001 --gid btphoto \

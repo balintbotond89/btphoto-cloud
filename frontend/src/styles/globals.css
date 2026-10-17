@@ -1,5 +1,52 @@
 @import "tailwindcss";
 
+/* A fiókfelületek a meglévő design tokeneket és betűkészleteket használják. */
+.account-links, .account-identity { display: flex; align-items: center; gap: 0.75rem; }
+.account-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.account-avatar--fallback { display: grid; place-items: center; background: var(--panel-2); color: var(--ink); }
+.account-identity [data-account-name] { max-width: 22rem; overflow-wrap: anywhere; }
+.registration-main { max-width: 64rem; margin: 0 auto; padding: clamp(1rem, 4vw, 3rem); }
+.registration-shell > .auth-header, .registration-main { position: relative; z-index: 1; }
+.registration-backdrop { position: fixed; inset: 0; pointer-events: none; overflow: hidden; opacity: 0.45; }
+.registration-form fieldset { background: color-mix(in srgb, var(--panel) 94%, transparent); }
+.registration-form [aria-invalid="true"] { border-color: var(--error); }
+.registration-form { display: grid; gap: 2rem; }
+.registration-form h1 { font-family: "Archivo Variable", sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; }
+.registration-form fieldset { border: 1px solid var(--rule-strong); padding: 1.5rem; min-width: 0; }
+.registration-form legend { padding: 0 0.5rem; font-weight: 600; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 1.5rem; }
+.business-toggle { display: flex; align-items: center; gap: 0.75rem; }
+.business-toggle input { width: 1.25rem; height: 1.25rem; accent-color: var(--oxide); }
+.registration-preview { width: 6rem; height: 6rem; margin-top: 1rem; }
+.registration-queue { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.registration-card, .password-panel { padding: 1.5rem; border: 1px solid var(--rule-strong); background: var(--panel); }
+.registration-card dl, .profile-details { display: grid; grid-template-columns: minmax(6rem, 1fr) 2fr; gap: 0.5rem 1rem; }
+.registration-card dd, .profile-details dd { margin: 0; overflow-wrap: anywhere; }
+.password-panel { max-width: 40rem; margin-top: 2rem; }
+.password-panel h2, .registration-form h2 { font-family: "Archivo Variable", sans-serif; }
+.auth-card__footer { padding: 1.5rem; }
+.auth-card__footer a, .registration-form a { text-decoration: underline; }
+@media (max-width: 767px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .account-actions { flex-wrap: wrap; }
+  .account-identity [data-account-name] { max-width: 8rem; overflow-wrap: anywhere; }
+  .registration-card dl, .profile-details { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .auth-header:has(.account-links), .site-header:has(.account-links), .auth-header:has(.account-identity) {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-block: 1rem;
+  }
+  .site-header__actions:has(.account-links), .site-header__actions:has(.account-identity) {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    min-height: 48px;
+    margin-left: 0;
+  }
+  .wordmark { flex-shrink: 0; }
+}
+
 :root,
 :root[data-theme="light"] {
   --ground: #e7e9ec;
@@ -334,7 +381,8 @@ html:not(.motion-enhanced) .hero__wave {
   animation: live-pulse 2.2s ease-out infinite;
 }
 
-.hero h1 {
+.hero h1,
+.auth-context h2 {
   margin: 0;
   font-family: "Archivo Variable", sans-serif;
   font-size: clamp(4.4rem, 10vw, 10.5rem);
@@ -345,7 +393,8 @@ html:not(.motion-enhanced) .hero__wave {
   text-transform: uppercase;
 }
 
-.hero h1 span {
+.hero h1 span,
+.auth-context h2 span {
   display: block;
 }
 
@@ -935,8 +984,17 @@ html:not(.motion-enhanced) .hero__wave {
 }
 
 .ui-field {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   gap: 0.5rem;
+}
+
+/* A hiba és a súgó csak a mező alatti területet növelheti, a beviteli elemet nem nyújthatja. */
+.ui-field > .ui-input {
+  flex: none;
+  height: 3.25rem;
+  min-height: 3.25rem;
 }
 
 .ui-field__label,
@@ -1208,7 +1266,7 @@ html:not(.motion-enhanced) .hero__wave {
   position: relative;
   display: grid;
   min-height: 680px;
-  place-items: end start;
+  place-items: center start;
   overflow: hidden;
   padding: clamp(3rem, 7vw, 7rem);
   border-right: 1px solid var(--rule-strong);
@@ -1217,45 +1275,18 @@ html:not(.motion-enhanced) .hero__wave {
     linear-gradient(0deg, transparent 0 33.2%, var(--rule) 33.3%, transparent 33.4%);
 }
 
-.auth-context::before {
-  position: absolute;
-  inset: -25% -15% 15% -30%;
-  border-radius: 50%;
-  background: repeating-radial-gradient(
-    ellipse at 50% 50%,
-    transparent 0 19px,
-    var(--rule) 20px 21px,
-    transparent 22px 39px
-  );
-  content: "";
-  opacity: 0.86;
-  transform: rotate(-9deg) scaleY(0.56);
-  mask-image: linear-gradient(125deg, black 20%, transparent 78%);
-  pointer-events: none;
-}
-
 .auth-context__content {
   position: relative;
   z-index: 1;
+  width: 100%;
+  min-width: 0;
   max-width: 720px;
 }
 
 .auth-context h2 {
-  max-width: 10ch;
+  max-width: 100%;
   margin: 2rem 0;
-  font-family: "Archivo Variable", sans-serif;
-  font-size: clamp(3.4rem, 7vw, 8rem);
-  font-stretch: condensed;
-  font-weight: 700;
-  letter-spacing: -0.065em;
-  line-height: 0.86;
-  text-transform: uppercase;
-}
-
-@media (max-width: 1400px) {
-  .auth-context h2 {
-    font-size: clamp(3.2rem, 5vw, 4rem);
-  }
+  font-size: clamp(3.2rem, 6.3vw, 7.5rem);
 }
 
 .auth-context__content > p:last-child {

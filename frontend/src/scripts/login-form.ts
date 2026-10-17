@@ -74,6 +74,8 @@ function renderLoginReason(root: HTMLElement, reason: string | null) {
     renderStatus(status, "A munkamenet lejárt vagy bejelentkezés szükséges.", "error")
   } else if (reason === "logout") {
     renderStatus(status, "A kijelentkezés sikeres.", "success")
+  } else if (reason === "password-changed") {
+    renderStatus(status, "A jelszó megváltozott. Jelentkezz be az új jelszóval.", "success")
   }
 }
 
@@ -100,7 +102,7 @@ async function submitLoginForm(
 
   try {
     const csrfToken = await dependencies.loadCsrf(signal)
-    await dependencies.authenticateAdmin(
+    const account = await dependencies.authenticateAdmin(
       {
         identifier: elements.identifier.value.trim(),
         password: elements.password.value,
@@ -108,7 +110,7 @@ async function submitLoginForm(
       csrfToken,
       signal,
     )
-    dependencies.navigate("/admin/")
+    dependencies.navigate(account.role === "ADMIN" ? "/admin/" : "/workspace/")
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return

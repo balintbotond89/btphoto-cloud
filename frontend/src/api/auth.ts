@@ -16,20 +16,29 @@ type LoginCredentials = {
 
 type AuthenticatedAdmin = {
   username: string
+  role: "ADMIN" | "PHOTOGRAPHER"
+  displayName: string
+  requiresPasswordChange: boolean
+  workspaceId: string | null
+  avatarUrl: string | null
 }
 
 class AuthApiError extends Error {
   readonly status: number
   readonly code?: string
+  readonly fields: Readonly<Record<string, string>>
 
   constructor(
     message: string,
-    { status = 0, code, cause }: { status?: number; code?: string; cause?: unknown } = {},
+    { status = 0, code, cause, fields = {} }: {
+      status?: number; code?: string; cause?: unknown; fields?: Record<string, string>
+    } = {},
   ) {
     super(message, { cause })
     this.name = "AuthApiError"
     this.status = status
     this.code = code
+    this.fields = Object.freeze({ ...fields })
   }
 }
 
@@ -51,7 +60,11 @@ function isCsrfTokenResponse(value: unknown): value is CsrfTokenResponse {
 }
 
 function isAuthenticatedAdmin(value: unknown): value is AuthenticatedAdmin {
-  return isRecord(value) && isNonEmptyString(value.username)
+  return isRecord(value) && isNonEmptyString(value.username) && isNonEmptyString(value.displayName) &&
+    (value.role === "ADMIN" || value.role === "PHOTOGRAPHER") &&
+    typeof value.requiresPasswordChange === "boolean" &&
+    (value.workspaceId === null || typeof value.workspaceId === "string") &&
+    (value.avatarUrl === null || value.avatarUrl === "/api/photographer/profile/avatar")
 }
 
 async function authFetch(
@@ -77,11 +90,17 @@ async function authFetch(
 
 async function createResponseError(response: Response): Promise<AuthApiError> {
   let code: string | undefined
+  const fields: Record<string, string> = {}
 
   try {
     const payload: unknown = await response.json()
     if (isRecord(payload) && isNonEmptyString(payload.code)) {
       code = payload.code
+    }
+    if (isRecord(payload) && isRecord(payload.fields)) {
+      for (const [key, value] of Object.entries(payload.fields)) {
+        if (/^[a-zA-Z.]+$/.test(key) && typeof value === "string") fields[key] = value
+      }
     }
   } catch {
     // A hibaválasz törzse opcionális; a státuszkód továbbra is elegendő.
@@ -90,6 +109,7 @@ async function createResponseError(response: Response): Promise<AuthApiError> {
   return new AuthApiError("A hitelesítési kérés sikertelen.", {
     status: response.status,
     code,
+    fields,
   })
 }
 
@@ -196,5 +216,6 @@ async function endSession(signal?: AbortSignal): Promise<void> {
   }
 }
 
-export { authenticate, AuthApiError, endSession, getCsrfToken, getCurrentAdmin }
+export { authenticate, AuthApiError, endSession, getCsrfToken, getCurrentAdmin,
+  authFetch, createResponseError, readJson }
 export type { AuthenticatedAdmin, CsrfTokenResponse, LoginCredentials }

@@ -1,5 +1,51 @@
 # Production deployment
 
+## CR-0002 – staging és CD implementáció
+
+A jóváhagyott környezetszétválasztás és az új, fix root CD-motor dokumentációja:
+[deploy/cd/README.md](cd/README.md). Ez a legacy controlled-deploy.sh helyett
+külön, előre telepítendő belépési pontot használ; a régi script nem vált
+hallgatólagosan ismételt deployra alkalmassá. Az első production átvétel,
+runner-hardening, GitHub approval, staging DB/NFS és DNS/TLS továbbra is külön
+valós élesítési kapu. A jelenlegi éles stack nem lett átállítva.
+
+## UI-01 CAPTCHA kiadási feltétel
+
+Bekapcsolt regisztrációhoz a védett envben kötelező a BTPHOTO_RECAPTCHA_SITE_KEY,
+BTPHOTO_RECAPTCHA_SECRET és BTPHOTO_RECAPTCHA_HOSTNAMES; a secret nem kerül a frontendhez.
+A validator hiányzó értéknél megáll. Valódi kulcsok még nincsenek; kulcsos/domainhelyes
+Google-végponti elfogadás szükséges. A CAPTCHA nem váltja ki a lent felsorolt korábbi kapukat.
+
+## CR-0001 kiadási kapu – külön operatív feladat
+
+A regisztráció alapértéke false. **A jelenlegi controlled-deploy.sh még nem a CR-0001 kiadási scriptje.**
+Az avatar mount runtime-engedélylistája és a rollback-kompatibilitási gate külön,
+jóváhagyott szerveroldali feladat. Ebben az implementációban a script nem változott.
+
+Kiadás/bekapcsolás előtt kötelező: sikeres PR V1/V2/V3 és CockroachDB/konkurencia teszt;
+végleges JRE avatar-codec teszt; régi accountok auditja; pontosan egy operator binding és
+befejezett kötelező jelszócsere; NFS/UID/GID 10001 írhatóság és restart-utáni avatar;
+frissített runtime/deploy-validator; valódi egy ADMIN + két PHOTOGRAPHER böngészős elfogadás.
+
+A 2026-10-14-i read-only audit szerint /srv/btphoto/media a 192.168.60.2:/media NFSv4.2 mountja;
+az avatars alkönyvtár még nem létezett. A Compose kizárólag
+/srv/btphoto/media/avatars → /srv/btphoto/avatars írható bindot enged, create_host_path:false mellett.
+Docker nem hozhat létre észrevétlenül helyi helyettesítő könyvtárat. A létrehozás és
+NFS-jogosultságok külön jóváhagyandók; a teljes média mount nem kerül átadásra.
+
+Az új backend account-contract labelje tenant-v1: kiadási marker, nem önmagában security-bizonyíték.
+SystemAdmin/bootstrap vagy fotós account/workspace állapot mellett tilos legacy, minden aktív
+fióknak ADMIN szerepet adó release automatikus visszaindítása. A későbbi gate a kiadás eredetét
+és tényleges tesztbizonyítékát is ellenőrzi. Az image-rollback nem adatbázis-rollback.
+A lenti korábbi indítási példák csak e kapu és külön műveleti jóváhagyás után használhatók.
+
+A regisztrációs limit 5 kísérlet / 10 perc / ellenőrzött cím, egy backend memóriájában;
+újraindításkor nullázódik. A gateway a saját peer címével felülírja az X-BTPhoto-Client-IP fejlécet.
+A backend ezt csak a Docker DNS-ben caddy néven feloldott peerből fogadja el.
+A [Caddy hivatalos reverse_proxy leírása](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
+rögzíti a header_up felülírás működését. Az SSH-alagút mögött a gateway nem ismeri a böngésző
+valódi távoli címét, ezért a tesztelőket közös címlimit érintheti. Új publikus proxyhoz külön trust-audit szükséges.
+
 Az első belső production-szerű stack négy szolgáltatást futtat a `docker01`
 gépen:
 
@@ -13,7 +59,7 @@ A CockroachDB nem része a Compose stacknek. A migrations és a backend a belső
 hálózaton éri el a `sql01` gépet. A migráció minden indítás előtt idempotensen
 lefuthat; a backend csak a sikeres `exited (0)` végállapot után indul, és
 Hibernate `ddl-auto: validate` módban nem módosít sémát. Ebben a fázisban a
-backend nem kapja meg az NFS média mountot,
+backend kizárólag a külön avatar NFS-alkönyvtárat kapja meg írható mountként,
 és a gateway nem konfigurál publikus 80/443 portot, DNS-nevet vagy automatikus
 HTTPS-t.
 
@@ -75,6 +121,7 @@ Szükséges változók:
 | `DB_NAME` | Alkalmazás-adatbázis, jelenleg `btphoto` |
 | `DB_USERNAME` | Alkalmazásfelhasználó, jelenleg `btphoto_app` |
 | `DB_PASSWORD` | Repository-n kívül kezelt production secret |
+| `BTPHOTO_REGISTRATION_ENABLED` | false alapérték; csak a CR-0001 kiadási kapu után true |
 
 A `SPRING_PROFILES_ACTIVE=cockroachdb` és a
 `DB_SSL_ROOT_CERT=/run/secrets/btphoto/cockroach-ca.crt` értékeket a Compose

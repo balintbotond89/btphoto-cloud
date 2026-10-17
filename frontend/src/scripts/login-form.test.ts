@@ -1,6 +1,7 @@
+import { ADMIN_ACCOUNT } from "@/test/account"
 import { describe, expect, it, vi } from "vitest"
 
-import { AuthApiError, type CsrfTokenResponse } from "@/api/auth"
+import { AuthApiError, type AuthenticatedAdmin, type CsrfTokenResponse } from "@/api/auth"
 import {
   renderLoginReason,
   submitLoginForm,
@@ -37,7 +38,7 @@ function createDependencies(
 ): LoginDependencies {
   return {
     loadCsrf: vi.fn().mockResolvedValue(CSRF_TOKEN),
-    authenticateAdmin: vi.fn().mockResolvedValue({ username: "admin" }),
+    authenticateAdmin: vi.fn().mockResolvedValue(ADMIN_ACCOUNT),
     navigate: vi.fn(),
     ...overrides,
   }
@@ -58,6 +59,15 @@ describe("login form", () => {
     )
     expect(dependencies.navigate).toHaveBeenCalledWith("/admin/")
     expect(root.querySelector<HTMLInputElement>("[name='password']")?.value).toBe("")
+  })
+
+  it("fotóst kizárólag a saját workspace oldalra irányít", async () => {
+    const root = createLoginForm()
+    const dependencies = createDependencies({ authenticateAdmin: vi.fn().mockResolvedValue({
+      ...ADMIN_ACCOUNT, role: "PHOTOGRAPHER", workspaceId: "fixture-workspace", displayName: "Fotós",
+    }) })
+    await submitLoginForm(root, dependencies)
+    expect(dependencies.navigate).toHaveBeenCalledWith("/workspace/")
   })
 
   it("hibás azonosítóknál általános hibaüzenetet jelenít meg", async () => {
@@ -92,10 +102,10 @@ describe("login form", () => {
 
   it("a kérés alatt letiltja az ismételt beküldést", async () => {
     const root = createLoginForm()
-    let resolveAuthentication: ((value: { username: string }) => void) | undefined
+    let resolveAuthentication: ((value: AuthenticatedAdmin) => void) | undefined
     const authenticateAdmin = vi.fn(
       () =>
-        new Promise<{ username: string }>((resolve) => {
+        new Promise<AuthenticatedAdmin>((resolve) => {
           resolveAuthentication = resolve
         }),
     )
@@ -109,7 +119,7 @@ describe("login form", () => {
     await secondSubmission
     expect(authenticateAdmin).toHaveBeenCalledOnce()
 
-    resolveAuthentication?.({ username: "admin" })
+    resolveAuthentication?.(ADMIN_ACCOUNT)
     await firstSubmission
   })
 

@@ -1,9 +1,17 @@
 # Teszteset-gyűjtemény
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Új TC-REG-0001–0012, TC-ADM-0001–0007 és TC-TEN-0001–0007 tartalmát az elfogadott CR-0001 AC-táblája határozza meg. Kötelező a regisztráció, pending/rejected login tiltása, singleton-admin konkurencia, egyszeri bootstrap, jelszócsere-gate és session-visszavonás, két valódi fotósprofil tenant-elkülönítése, avatarhívások és storagehibák vizsgálata. A későbbi ügyfél/galéria/proofing tenanttesztek a megfelelő üzleti modulhoz tartoznak; ebben a ciklusban nem jelenthetők teljesítettnek.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`

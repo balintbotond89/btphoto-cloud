@@ -1,9 +1,17 @@
 # UI/UX terv
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Új /register/ szekciózott fotósűrlap, vállalkozási checkbox és feltételes cégmezők, avatar-előnézet, főoldali Regisztráció/Belépés gomb. Közös /login/; ADMIN → /admin/, PHOTOGRAPHER → /workspace/. Az /admin/ kezdetben kötelező jelszócsere-űrlap, annak befejezése után regisztráció-elbírálás és saját jelszócsere. A fotós fejlécében kör alakú saját avatar/monogram. A meglévő Astro design tokenek, fontok, UI-komponensek és reduced-motion előírások megmaradnak.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`
@@ -129,27 +137,29 @@ A BTPhoto-specifikus átalakítás:
 
 # 4. Információs architektúra
 
-## 4.1 Admin nézetek
+## 4.1 Fotós- és üzemeltetői nézetek
 
 Tervezett fő route-ok:
 
 ```text
-/admin/login
+/login
 /admin
-/admin/clients
-/admin/clients/:clientId
-/admin/galleries
-/admin/galleries/new
-/admin/galleries/:galleryId
-/admin/galleries/:galleryId/upload
-/admin/galleries/:galleryId/share
-/admin/galleries/:galleryId/selection
+/register
+/workspace
+/workspace/clients
+/workspace/clients/:clientId
+/workspace/galleries
+/workspace/galleries/new
+/workspace/galleries/:galleryId
+/workspace/galleries/:galleryId/upload
+/workspace/galleries/:galleryId/share
+/workspace/galleries/:galleryId/selection
 ```
 
 Később:
 
 ```text
-/admin/settings
+/workspace/settings
 /admin/audit
 ```
 
@@ -717,8 +727,8 @@ Card lista.
 
 ### Backend
 
-- `GET /api/admin/clients`
-- `POST /api/admin/clients`
+- `GET /api/photographer/clients`
+- `POST /api/photographer/clients`
 
 ---
 
@@ -764,7 +774,7 @@ Gallery card:
 
 ### Backend
 
-- `GET /api/admin/galleries`
+- `GET /api/photographer/galleries`
 
 ---
 
@@ -895,7 +905,7 @@ A UI viszont úgy készüljön, hogy később többfájlos upload bővíthető l
 A token technikai értéke ne jelenjen meg külön debug mezőként.
 
 Backend:
-- `POST /api/admin/galleries/{galleryId}/shares`
+- `POST /api/photographer/galleries/{galleryId}/shares`
 - revoke endpoint.
 
 ---
@@ -938,7 +948,7 @@ Későbbi UX:
 - „Összes kiválasztott engedélyezése” bulk action.
 
 Backend:
-- `PATCH /api/admin/galleries/{galleryId}/media/{mediaId}/download-permission`
+- `PATCH /api/photographer/galleries/{galleryId}/media/{mediaId}/download-permission`
 
 Később:
 - export;
@@ -1248,26 +1258,26 @@ POST-MVP:
 
 ## Ügyfél lista
 
-- `GET /api/admin/clients`
-- `POST /api/admin/clients`
+- `GET /api/photographer/clients`
+- `POST /api/photographer/clients`
 
 ## Galéria lista
 
-- `GET /api/admin/galleries`
-- `POST /api/admin/galleries`
+- `GET /api/photographer/galleries`
+- `POST /api/photographer/galleries`
 
 ## Galéria admin
 
-- `GET /api/admin/galleries/{id}`
-- `GET /api/admin/galleries/{id}/media`
+- `GET /api/photographer/galleries/{id}`
+- `GET /api/photographer/galleries/{id}/media`
 
 ## Upload
 
-- `POST /api/admin/galleries/{galleryId}/media`
+- `POST /api/photographer/galleries/{galleryId}/media`
 
 ## Share
 
-- `POST /api/admin/galleries/{galleryId}/shares`
+- `POST /api/photographer/galleries/{galleryId}/shares`
 - revoke endpoint
 
 ## Public gallery
@@ -1283,7 +1293,7 @@ Tervezett:
 
 ## Admin selection
 
-- `GET /api/admin/galleries/{galleryId}/selections`
+- `GET /api/photographer/galleries/{galleryId}/selections`
 
 A pontos URL-kontraktus a `03-funkcionalis-kovetelmenyek.md` implementációjakor véglegesíthető.
 

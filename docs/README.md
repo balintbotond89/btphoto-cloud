@@ -8,6 +8,15 @@ A `docs` mappa a projekt követelmény-, teszt-, UI/UX- és architektúradokumen
 
 ## Dokumentumok
 
+A jóváhagyott staging/production és CD kiegészítés normatív forrása:
+[CR-0002 – staging és kontrollált CD](CR-0002-staging-cd.md). Saját AC-CD/TC-CD
+mátrixot tartalmaz, a US-0011/US-0012 NFR/TR lánchoz kötve. Nem írja át a történeti
+baseline-okat és nem jelent sikeres szerveroldali élesítést.
+
+A hash-ellenőrzött, letiltott CD-motor telepítésének operátori bizonyítékai és
+a még nyitott átadási lépések:
+[CR-0002 – üzemeltetői átadás](CR-0002-uzemeltetoi-atadas.md).
+
 | Fájl | Tartalom |
 | --- | --- |
 | `01-uzleti-kovetelmenyek.md` | üzleti célok és BR-ek |

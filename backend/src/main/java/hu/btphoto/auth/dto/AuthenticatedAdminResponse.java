@@ -1,4 +1,9 @@
 package hu.btphoto.auth.dto;
 
-public record AuthenticatedAdminResponse(String username) {
+import java.util.UUID;
+
+public record AuthenticatedAdminResponse(String username, String role, String displayName,
+        boolean requiresPasswordChange, UUID workspaceId, String avatarUrl) {
+    @Override
+    public String toString() { return "AuthenticatedAdminResponse[redacted]"; }
 }

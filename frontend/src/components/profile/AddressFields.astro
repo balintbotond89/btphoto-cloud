@@ -1,0 +1,12 @@
+---
+import Input from "@/components/ui/Input.astro"
+type Props = { prefix: string; required?: boolean }
+const { prefix, required = false } = Astro.props
+---
+<div class="form-grid" data-address={prefix}>
+  <Input id={prefix + "-country"} name={prefix + ".country"} label="Országkód (pl. HU)" required={required} maxlength={2} />
+  <Input id={prefix + "-postal"} name={prefix + ".postalCode"} label="Irányítószám" required={required} maxlength={16} />
+  <Input id={prefix + "-city"} name={prefix + ".city"} label="Település" required={required} maxlength={100} />
+  <Input id={prefix + "-line1"} name={prefix + ".line1"} label="Utca, házszám" required={required} maxlength={200} />
+  <Input id={prefix + "-line2"} name={prefix + ".line2"} label="További címadat (opcionális)" maxlength={200} />
+</div>

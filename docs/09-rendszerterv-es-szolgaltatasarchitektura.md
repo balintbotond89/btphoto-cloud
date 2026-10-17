@@ -1,9 +1,17 @@
 # Rendszerterv és szolgáltatásarchitektúra
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+A backend közös, moduláris alkalmazás több logikailag elválasztott fotósmunkaterülettel. AppUser → PhotographerWorkspace/Profile/Business; SystemAdmin singleton binding külön ADMIN szereppel. A jelenlegi admin_user fizikai név kompatibilitásból marad, de nem jelent automatikus adminjogot. Minden fotós üzleti kapcsolata és storage-útvonala workspace-hez kötött; az üzemeltető nem kap automatikus médiahozzáférést. A frontend /admin/ és /workspace/ külön szerepfelületet használ, közös /login/ mellett. A pontos adat-, API-, bootstrap- és rollout-szerződés a CR-0001-ben szerepel.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 A dokumentum a BTPhoto Private Cloud magas szintű rendszer- és szolgáltatásarchitektúráját rögzíti. A cél az, hogy a már működő Proxmox + MicroServer infrastruktúra és a fejlesztendő alkalmazás között egyértelmű, implementálható kapcsolat legyen.
 
@@ -320,7 +328,11 @@ Az első adatmodell fő elemei:
 
 | Entitás | Szerep |
 | --- | --- |
-| `AdminUser` | belső fotós/admin felhasználó |
+| `AppUser` | közös hitelesítési rekord; legacy admin_user fizikai leképezés |
+| `SystemAdmin` | egyetlen üzemeltetői binding, kezdeti jelszócsere és session-verzió |
+| `PhotographerWorkspace` | egy fotós kizárólagos tulajdonú munkaterülete |
+| `PhotographerProfile` | saját személyes adatok és relatív avatarútvonal |
+| `PhotographerBusiness` | a profil opcionális vállalkozási adatlapja |
 | `Client` | fotós ügyfele |
 | `Gallery` | fotózás vagy projekt |
 | `MediaAsset` | média metaadata és MVP-ben a média-szintű letöltési engedély állapota |
@@ -461,17 +473,17 @@ Feladata:
 ### Admin bejelentkezés és munkamenet
 
 ```text
-Admin böngésző
+Fotós / üzemeltető böngésző
   ↓ GET /api/auth/csrf
 Caddy / same-origin belépési pont
   ↓ POST /api/auth/login + CSRF-token
 Spring Security
   ↓
-AdminUserRepository ── JDBC, verify-full ── CockroachDB
+AppUserRepository ── JDBC, verify-full ── CockroachDB
   ↓
 szerveroldali HTTP session + HttpOnly/Secure/SameSite=Lax cookie
-  ↓ GET /api/auth/me vagy /api/admin/**
-backend oldali jogosultság-ellenőrzés
+  ↓ GET /api/auth/me; szerep szerint /api/admin/** vagy /api/photographer/**
+backend oldali aktuális account-, binding-, sessionverzió- és workspace-ellenőrzés
 ```
 
 A frontend nem tárol access tokent. A kliensoldali route-ellenőrzés és átirányítás csak felhasználói élményt biztosít; a védett adatok kiadásáról minden kérésnél a backend dönt. Hitelesítés nélkül az admin API JSON `401`, elégtelen jogosultságnál JSON `403` választ ad, HTML-átirányítás nélkül.

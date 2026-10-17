@@ -5,8 +5,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro"
 ---
 
 <BaseLayout
-  title="Admin bejelentkezés | BTPhoto Private Cloud"
-  description="Biztonságos adminisztrátori bejelentkezés a BTPhoto Private Cloud rendszerbe."
+  title="Bejelentkezés | BTPhoto Private Cloud"
+  description="Közös fotós- és üzemeltetői bejelentkezés a BTPhoto Private Cloud rendszerbe."
 >
   <div class="auth-shell">
     <header class="auth-header">
@@ -25,13 +25,14 @@ import BaseLayout from "@/layouts/BaseLayout.astro"
 
     <main id="fo-tartalom" class="auth-main">
       <section class="auth-context" aria-labelledby="auth-context-title">
+        <canvas class="hero__wave" data-wave-canvas aria-hidden="true"></canvas>
+        <div class="hero__contours" aria-hidden="true"></div>
         <div class="auth-context__content">
           <p class="technical-label">BTPHOTO / PRIVATE WORKFLOW</p>
-          <h2 id="auth-context-title">Kontrollált hozzáférés.<br />Saját infrastruktúra.</h2>
-          <p>
-            A munkamenetet a backend hozza létre és ellenőrzi. Az alkalmazás a jelszót és a
-            CSRF tokent nem menti kliensoldali tárolóba.
-          </p>
+          <h2 id="auth-context-title">
+            <span>BTPhoto</span>
+            <span class="hero__outline">Private Cloud</span>
+          </h2>
         </div>
       </section>
 

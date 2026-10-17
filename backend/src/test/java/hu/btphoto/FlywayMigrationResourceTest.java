@@ -35,6 +35,15 @@ class FlywayMigrationResourceTest {
     }
 
     @Test
+    void packagesPhotographerMigrationWithoutBootstrapSecrets() throws IOException {
+        var resource = new ClassPathResource("db/migration/V3__photographer_accounts.sql");
+        var content = resource.getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(content.contains("CREATE TABLE system_admin"));
+        assertTrue(content.contains("FOREIGN KEY (workspace_id, user_id)"));
+        assertFalse(content.contains("INSERT INTO"));
+    }
+
+    @Test
     void packagesAdminUserMigrationResource() throws IOException {
         var resource = new ClassPathResource(ADMIN_USER_MIGRATION);
         assertTrue(resource.exists());

@@ -40,11 +40,24 @@ services:
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_SSL_ROOT_CERT: /run/secrets/btphoto/cockroach-ca.crt
+      BTPHOTO_REGISTRATION_ENABLED: ${BTPHOTO_REGISTRATION_ENABLED:-false}
+      BTPHOTO_RECAPTCHA_SITE_KEY: ${BTPHOTO_RECAPTCHA_SITE_KEY:-}
+      BTPHOTO_RECAPTCHA_SECRET: ${BTPHOTO_RECAPTCHA_SECRET:-}
+      BTPHOTO_RECAPTCHA_HOSTNAMES: ${BTPHOTO_RECAPTCHA_HOSTNAMES:-}
+      BTPHOTO_TRUSTED_GATEWAY: caddy
+      BTPHOTO_AVATAR_ROOT: /srv/btphoto/avatars
     volumes:
       - type: bind
         source: /etc/btphoto/certs/ca.crt
         target: /run/secrets/btphoto/cockroach-ca.crt
         read_only: true
+      # A hoston előzetesen ellenőrzött NFS-mount alatti, külön avatar-könyvtár.
+      - type: bind
+        source: /srv/btphoto/media/avatars
+        target: /srv/btphoto/avatars
+        read_only: false
+        bind:
+          create_host_path: false
     networks:
       - application
     depends_on:

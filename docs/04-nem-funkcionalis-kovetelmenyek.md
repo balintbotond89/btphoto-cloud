@@ -1,9 +1,17 @@
 # Nem funkcionális követelmények
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+A NFR-SEC-0001 kötelező része az ADMIN/PHOTOGRAPHER szerepszétválasztás, backend tenant-szűrés, egyszer használható bootstrap és jelszócsere utáni session-visszavonás. A NFR-SEC-0002 tiltja a kezdeti jelszó forrásba, migrációba, image-be vagy naplóba írását. A NFR-PRV-0001 a fotós személyes és vállalkozási adatainak saját fiókra és regisztráció-eljárásra korlátozott elérésére is kiterjed. A hozzáférhetőség, világos/sötét téma és mobilnézet a register/admin/workspace oldalakra is kötelező. Implementációs bizonyítékot a terv elfogadása nem helyettesít.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`

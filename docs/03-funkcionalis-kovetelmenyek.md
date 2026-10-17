@@ -1,9 +1,51 @@
 # Funkcionális követelmények és Acceptance Criteria
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+Elfogadott új FR-ek: FR-AUT-0002 Fotósregisztráció, FR-AUT-0003 Egyetlen üzemeltető és jelszócsere, FR-PRF-0001 Saját profil, FR-PRF-0002 Tenant-elkülönített avatar, FR-TEN-0001 Tulajdonosi adat- és fájlhozzáférés. A 25 azonosított AC, mezővalidáció és API-szerződés normatív forrása a CR-0001. A meglévő üzleti FR-ekben adminnak nevezett fotós PHOTOGRAPHER, végpontjai /api/photographer/**. Az /api/admin/** csak az üzemeltetőé. A /api/auth/me és logout mindkét jóváhagyott szerephez, bootstrapkor a korlátozott sessionhöz is tartozik. Üzemeltetői regisztráció-elbírálás kötelező jelszócsere előtt tiltott.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+### Új funkcionális elfogadási szerződés
+
+A 2026-10-15-i [UI-01 kiegészítés](CR-0001-UI-01-regisztracios-javitasok.md) pontosítja a mezőhibajelzést és a szövegeket, valamint AC-FR-AUT-0002-07 / TC-REG-0013 alatt kötelező, backendoldalon is ellenőrzött Google reCAPTCHA v2 védelmet ad a regisztrációhoz. A lenti eredeti 25 AC és ez az új kritérium együtt érvényes; a valódi kulcsos elfogadás nyitott.
+
+A FR-AUT-0002/0003, FR-PRF-0001/0002 és FR-TEN-0001 a CR-0001 3–8. fejezetének részletes adat-, API-, szerep- és állapotgépszerződését követi. Az alábbi AC-tábla követelmény, nem teljesítési jelentés. A verifikáció státuszát a CR-0001 implementációs jelentése külön rögzíti.
+
+| AC | Given / When / Then tartalom | Tervezett TC |
+| --- | --- | --- |
+| AC-FR-AUT-0002-01 | Érvényes fotósadatok beküldésekor egyetlen PENDING, inaktív fiók, profil és saját workspace jön létre; nincs session | TC-REG-0001 |
+| AC-FR-AUT-0002-02 | Hibás e-mail, hiányzó kötelező adat, eltérő jelszó vagy párhuzamos duplikált e-mail esetén nincs új sikeres fiók | TC-REG-0002, TC-REG-0003 |
+| AC-FR-AUT-0002-03 | Függő vagy elutasított fiók bejelentkezése nem hoz létre hitelesített sessiont | TC-REG-0004 |
+| AC-FR-AUT-0002-04 | Az üzemeltető elfogadja a kérelmet, és a fotós PHOTOGRAPHER szereppel saját workspace-re léphet be | TC-REG-0005 |
+| AC-FR-AUT-0002-05 | Fotós által, saját aktiválási kéréssel, hamisított ADMIN szereppel vagy CSRF nélkül a jóváhagyás megtagadott | TC-REG-0006 |
+| AC-FR-PRF-0001-01 | Vállalkozási checkbox bekapcsolásakor a cégmezők megjelennek és a backend a feltételes szabályokat ellenőrzi | TC-REG-0007 |
+| AC-FR-PRF-0001-02 | Saját profil lekérhető, más fotós személyes profilja normál fotósként nem; hash és teljes cím nem kerül a me válaszba | TC-REG-0008 |
+| AC-FR-PRF-0002-01 | Érvényes avatar tárolódik, belépés után a fejlécben kör alakúan megjelenik; avatar nélkül helyettesítő látható | TC-REG-0009 |
+| AC-FR-PRF-0002-02 | Tiltott, sérült, túl nagy vagy útvonalmanipuláló avatar elutasított; storage/DB-hibánál nincs sikeres félkész regisztráció | TC-REG-0010 |
+| AC-FR-AUT-0002-06 | A főoldalról Regisztráció és Belépés elérhető; 390/768/1280 px nézet, világos/sötét téma és billentyűzetes működés ellenőrzött | TC-REG-0011 |
+| AC-FR-PRF-0002-03 | Új konténer vagy backend-újraindítás után a tartós avatar megmarad; mount és runtime security contract teljesül | TC-REG-0012 |
+| AC-FR-AUT-0003-01 | Szerveroldali provisionálás után pontosan egy ADMIN létezik; párhuzamos második létrehozás DB-szinten is sikertelen | TC-ADM-0001 |
+| AC-FR-AUT-0003-02 | ADMIN a speciális regisztrációs felületen elbírálhat; PHOTOGRAPHER nem fér hozzá | TC-ADM-0002 |
+| AC-FR-AUT-0003-03 | ADMIN nem kap automatikus hozzáférést fotós galériához vagy médiához | TC-ADM-0003 |
+| AC-FR-AUT-0003-04 | Közös login után ADMIN a /admin/, PHOTOGRAPHER a /workspace/ felületre kerül; külön admin-login nincs | TC-ADM-0004 |
+| AC-FR-AUT-0003-05 | Az admin kezdeti jelszava csak egyszeri, korlátozott sessiont ad; párhuzamos újrafelhasználás és jelszócsere előtti jóváhagyás sikertelen | TC-ADM-0005 |
+| AC-FR-AUT-0003-06 | Kötelező jelszócsere után a régi secret nem működik, az új jelszó teljes admin-hozzáférést ad; reboot/deploy nem inicializálja újra | TC-ADM-0006 |
+| AC-FR-AUT-0003-07 | Normál adminjelszó-csere jelenlegi jelszót és CSRF-t igényel; csere után minden korábbi admin-session érvénytelen | TC-ADM-0007 |
+| AC-FR-TEN-0001-01 | Két aktív fotós profilja, avatarja és workspace-lekérdezése egymástól elkülönített | TC-TEN-0001 |
+| AC-FR-TEN-0001-02 | Idegen resource-ID vagy hamis workspace mező/fejléc nem enged olvasást vagy írást; nincs idegen adat a válaszban | TC-TEN-0002 |
+| AC-FR-TEN-0001-03 | Ügyfél/galéria/média/selection workspace-eltérő kapcsolata DB- és service-szinten elutasított | TC-TEN-0003 |
+| AC-FR-TEN-0001-04 | Share-token, letöltés és workflow-státusz csak a tokenhez/actorhoz tartozó workspace-ben érvényes | TC-TEN-0004 |
+| AC-FR-TEN-0001-05 | Tenantválasztó útvonalmanipuláció vagy más tenant fájlja nem ad ki idegen képet | TC-TEN-0005 |
+| AC-FR-TEN-0001-06 | Lista, keresés és darabszám kétfotós fixture-ben csak a saját tenant adataiból áll | TC-TEN-0006 |
+| AC-FR-TEN-0001-07 | Többfotós adatállapot mellett a rollback elutasítja a legacy, minden aktív fióknak ADMIN szerepet adó backendet | TC-TEN-0007 |
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 **Kapcsolódó dokumentumok:**
 - `01-uzleti-kovetelmenyek.md`
@@ -101,7 +143,7 @@ Tervezett backend komponensek:
 - `SecurityConfig`
 - `AuthController`
 - `AuthService`
-- `AdminUserRepository`
+- `AppUserRepository`
 - `AdminUserDetailsService`
 - globális biztonsági/exception kezelés
 
@@ -201,9 +243,9 @@ Tervezett backend komponensek:
 
 ## Tervezett API-k
 
-- `POST /api/admin/clients`
-- `GET /api/admin/clients/{id}`
-- `GET /api/admin/clients`
+- `POST /api/photographer/clients`
+- `GET /api/photographer/clients/{id}`
+- `GET /api/photographer/clients`
 
 Az ügyféllista keresése és szerkesztése későbbi finomításban bővíthető.
 
@@ -307,9 +349,9 @@ Tervezett komponensek:
 
 ## Tervezett API-k
 
-- `POST /api/admin/galleries`
-- `GET /api/admin/galleries`
-- `GET /api/admin/galleries/{id}`
+- `POST /api/photographer/galleries`
+- `GET /api/photographer/galleries`
+- `GET /api/photographer/galleries/{id}`
 
 ## Technikai specifikáció és megjegyzések
 
@@ -455,7 +497,7 @@ A pontos implementáció a technikai terv része.
 
 ## Tervezett API
 
-- `POST /api/admin/galleries/{galleryId}/media`
+- `POST /api/photographer/galleries/{galleryId}/media`
 - Content-Type: `multipart/form-data`
 
 ## Technikai specifikáció és megjegyzések
@@ -574,8 +616,8 @@ A storage absztrakció célja, hogy az üzleti logika ne közvetlen, szétszórt
 
 ## Tervezett API-k
 
-- `GET /api/admin/galleries/{galleryId}/media`
-- `GET /api/admin/media/{mediaId}/content` vagy külön preview végpont
+- `GET /api/photographer/galleries/{galleryId}/media`
+- `GET /api/photographer/media/{mediaId}/content` vagy külön preview végpont
 
 A pontos tartalomkiszolgálási szerződés később véglegesíthető.
 
@@ -666,10 +708,10 @@ Tervezett komponensek:
 
 ## Tervezett API-k
 
-- `POST /api/admin/galleries/{galleryId}/shares`
-- `DELETE /api/admin/galleries/{galleryId}/shares/{shareId}`
+- `POST /api/photographer/galleries/{galleryId}/shares`
+- `DELETE /api/photographer/galleries/{galleryId}/shares/{shareId}`
   vagy
-- `PATCH /api/admin/galleries/{galleryId}/shares/{shareId}/revoke`
+- `PATCH /api/photographer/galleries/{galleryId}/shares/{shareId}/revoke`
 
 A végleges HTTP szerződés a backend implementációkor rögzítendő.
 
@@ -969,7 +1011,7 @@ Implementáció előtt ezt el kell dönteni. Egyszerű MVP irányként javasolha
 ## Tervezett API-k
 
 - `POST /api/public/galleries/{token}/selection/finalize`
-- `GET /api/admin/galleries/{galleryId}/selections`
+- `GET /api/photographer/galleries/{galleryId}/selections`
 
 ## Technikai specifikáció és megjegyzések
 
@@ -1172,7 +1214,7 @@ Tervezett komponensek:
 
 ## Tervezett API
 
-- `PATCH /api/admin/galleries/{galleryId}/media/{mediaId}/download-permission`
+- `PATCH /api/photographer/galleries/{galleryId}/media/{mediaId}/download-permission`
 
 Példa request:
 

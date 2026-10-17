@@ -1,5 +1,9 @@
 package hu.btphoto.security;
 
+import hu.btphoto.account.service.AccountStore;
+import hu.btphoto.registration.service.RegistrationRateFilter;
+import hu.btphoto.registration.service.RegistrationLimiter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -20,7 +24,9 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 @Configuration
@@ -62,10 +68,14 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             SecurityContextRepository securityContextRepository,
-            SecurityErrorWriter errorWriter
+            SecurityErrorWriter errorWriter,
+            AccountStore store,
+            RegistrationLimiter registrationLimiter,
+            TrustedClientAddress clients
     ) throws Exception {
         var csrfTokenRepository = new HttpSessionCsrfTokenRepository();
         var csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
@@ -79,8 +89,12 @@ public class SecurityConfig {
                         .requireExplicitSave(true)
                         .securityContextRepository(securityContextRepository))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/health", "/api/auth/csrf", "/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/me", "/api/auth/logout", "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/health", "/api/auth/csrf", "/api/auth/login",
+                                "/api/auth/register", "/api/auth/registration-config").permitAll()
+                        .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/change-password").hasAnyRole("ADMIN", "PASSWORD_CHANGE")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/photographer/**").hasRole("PHOTOGRAPHER")
                         .anyRequest().denyAll())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> errorWriter.write(
@@ -95,7 +109,10 @@ public class SecurityConfig {
                                 "ACCESS_DENIED",
                                 "A művelet végrehajtása nem engedélyezett."
                         )))
-                .logout(AbstractHttpConfigurer::disable);
+                .logout(AbstractHttpConfigurer::disable)
+                .addFilterAfter(new AccountSessionFilter(store, errorWriter), SecurityContextHolderFilter.class)
+                .addFilterAfter(new RegistrationRateFilter(registrationLimiter, clients, errorWriter),
+                        CsrfFilter.class);
 
         return http.build();
     }

@@ -1,0 +1,27 @@
+---
+import ThemeToggle from "@/components/ThemeToggle.astro"
+import Button from "@/components/ui/Button.astro"
+type Props = { protectedView?: boolean }
+const { protectedView = false } = Astro.props
+---
+<header class="auth-header">
+  <a class="wordmark" href="/" aria-label="BTPhoto Private Cloud kezdőlap">
+    <span class="wordmark__mark" aria-hidden="true"></span>
+    <span><strong>BTPHOTO</strong><small>PRIVATE CLOUD</small></span>
+  </a>
+  <div class="site-header__actions account-actions">
+    {protectedView ? (
+      <span class="account-identity" data-account-identity hidden>
+        <img class="account-avatar" data-account-avatar alt="Saját profilkép" hidden width="40" height="40" />
+        <span class="account-avatar account-avatar--fallback" data-account-initials aria-hidden="true">BT</span>
+        <span data-account-name></span>
+      </span>
+    ) : (
+      <nav class="account-links" aria-label="Fiókműveletek">
+        <Button href="/register/" variant="outline" size="small">Regisztráció</Button>
+        <Button href="/login/" size="small">Belépés</Button>
+      </nav>
+    )}
+    <ThemeToggle />
+  </div>
+</header>

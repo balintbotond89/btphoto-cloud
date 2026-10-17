@@ -1,9 +1,17 @@
 # Üzleti követelmények
 
-**Dokumentum státusza:** fejlesztési baseline v0.1  
+## Jóváhagyott CR-0001 kiegészítés – 2026-10-14
+
+**Státusz:** követelmény elfogadott; repository-implementáció helyileg ellenőrzött, kiadási és production elfogadás nyitott. Ez a kiegészítés az érintett scope-ban felülírja a korábbi, fotóst és üzemeltetőt egyetlen adminszerepként kezelő leírást; a történeti baseline-fájlokat nem módosítja.
+
+A BR-FNC-0001, BR-FNC-0002 és BR-DAT-0001 több fotós önálló munkaterületére érvényes. A fotós és a platform üzemeltetője külön szerep; az ügyfelek továbbra is korlátozott galérialinket használnak. Az üzemeltető egyetlen ADMIN, a fotós PHOTOGRAPHER. A fotósregisztráció jóváhagyásra vár, és nem ad adminjogot.
+
+Részletes, jóváhagyott szerződés: [CR-0001](CR-0001-fotos-regisztracio-terv.md).
+
+**Dokumentum státusza:** fejlesztési baseline v0.4\
 **Projekt:** BTPhoto Private Cloud  
-**Baseline azonosító:** `BTPC-BL-2026-09-13-v0.1`  
-**Baseline dátuma:** `2026-09-13`
+**Baseline azonosító:** `BTPC-BL-2026-10-14-v0.4`\
+**Baseline dátuma:** `2026-10-14`
 
 A dokumentum a BTPhoto Private Cloud fotós privát felhő üzleti céljait, problémáit és követelményeit foglalja össze, és szolgál alapul a további tervezési dokumentumokhoz.
 
